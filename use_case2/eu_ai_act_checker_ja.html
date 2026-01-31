@@ -263,6 +263,9 @@
             <h1>EU AI法コンプライアンスチェッカー</h1>
             <p>AI法(EU) 2024/1689 に基づく義務を判定するツール<br>
             <small>Source: EC Service Desk Compliance Checker</small></p>
+            <div style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 0.85em;">
+                <strong>最適化統計:</strong> 33質問 → 20質問 (39%削減) | 平均パス長: 8.6 | 分析パス数: 7,762
+            </div>
         </header>
 
         <div class="mode-tabs">
@@ -293,13 +296,25 @@
     </div>
 
     <script>
-        // 質問データ（EC Service Deskルーティングに基づく）
+        // 最適化統計（optimization_engine.py から生成）
+        const optimizationStats = {
+            totalQuestions: 33,
+            optimizedQuestions: 20,
+            pathsAnalyzed: 7762,
+            shortestPath: 2,
+            longestPath: 12,
+            averagePath: 8.60,
+            medianPath: 8
+        };
+
+        // 質問データ（EC Service Deskルーティングに基づく + 最適化統計）
         const questions = {
             'Q1': {
                 id: 'Q1',
                 text: 'AIモデルとAIシステムのどちらをチェックしますか？',
                 info: 'AIモデルはAIシステムの必須コンポーネントですが、単独ではAIシステムを構成しません。',
                 type: 'radio',
+                stats: { ig: 0.0248, termProb: 0.0 },
                 options: [
                     { value: 0, label: 'AIモデル', next: 'QGPAI_1' },
                     { value: 1, label: 'AIシステム', next: 'QAIS_1' }
@@ -310,6 +325,7 @@
                 text: 'あなたのシステムはAI法の定義するAIシステムに該当しますか？',
                 info: 'AIシステムとは、様々なレベルの自律性で動作するように設計された機械ベースのシステムで、予測、コンテンツ、推奨、または決定などの出力を生成するものです。',
                 type: 'radio',
+                stats: { ig: 0.0349, termProb: 0.0 },
                 options: [
                     { value: 0, label: 'はい', next: 'QAIS_2' },
                     { value: 1, label: 'いいえ', terminal: true, result: 'out_of_scope' },
@@ -403,6 +419,7 @@
                 text: 'AIシステムは以下の禁止されたAI実践に該当しますか？',
                 info: '第5条により禁止されています。',
                 type: 'checkbox',
+                stats: { ig: 2.39, termProb: 0.615 },
                 options: [
                     { value: 0, label: 'サブリミナル技術、操作、欺瞞的技術の使用', terminal: true, result: 'prohibited' },
                     { value: 1, label: '年齢、障害、社会経済的状況による脆弱性の悪用', terminal: true, result: 'prohibited' },
@@ -516,12 +533,13 @@
                 terminal: true,
                 result: 'compliance_required'
             },
-            // GPAI トラック
+            // GPAI トラック（高情報利得）
             'QGPAI_1': {
                 id: 'QGPAI_1',
                 text: 'あなたのAIモデルはAI法の定義する汎用AIモデルに該当しますか？',
                 info: '汎用AIモデル（GPAI）とは、大量のデータで訓練され、多様なタスクに使用可能な基盤モデルです。',
                 type: 'radio',
+                stats: { ig: 4.6432, termProb: 0.053 },
                 options: [
                     { value: 0, label: 'はい', next: 'QGPAI_2' },
                     { value: 1, label: 'いいえ', terminal: true, result: 'not_gpai' }
@@ -532,6 +550,7 @@
                 text: '以下のどれに該当しますか？',
                 info: 'システミックリスクの判定',
                 type: 'checkbox',
+                stats: { ig: 4.6455, termProb: 0.0 },
                 options: [
                     { value: 0, label: '訓練に10^25 FLOP以上を使用', setFlags: ['gpai_systemic'] },
                     { value: 1, label: '欧州委員会によりシステミックリスクありと指定', setFlags: ['gpai_systemic'] },
@@ -543,6 +562,7 @@
                 id: 'QGPAI_3',
                 text: 'あなたの役割は？',
                 type: 'radio',
+                stats: { ig: 4.6469, termProb: 0.389 },
                 options: [
                     { value: 0, label: 'GPAIモデルのプロバイダー', next: 'QGPAI_7', setFlags: ['gpai_provider'] },
                     { value: 1, label: '既存GPAIモデルを微調整', next: 'QGPAI_7', setFlags: ['gpai_provider'] },
@@ -554,6 +574,7 @@
                 id: 'QGPAI_3_1',
                 text: 'あなたの変更により機能が大幅に変わりますか？',
                 type: 'radio',
+                stats: { ig: 4.6497, termProb: 0.714 },
                 options: [
                     { value: 0, label: 'いいえ', next: 'QGPAI_7' },
                     { value: 1, label: 'はい', terminal: true, result: 'gpai_new_provider' }
@@ -564,6 +585,7 @@
                 text: 'GPAIモデルはオープンソース例外に該当しますか？',
                 info: 'モデルパラメータが公開され、使用・変更・配布が自由に許可されている場合',
                 type: 'radio',
+                stats: { ig: 4.6496, termProb: 1.0 },
                 options: [
                     { value: 0, label: 'はい（オープンソース）', terminal: true, result: 'gpai_opensource' },
                     { value: 1, label: 'いいえ', terminal: true, result: 'gpai_compliance' }
@@ -679,9 +701,27 @@
                 `;
             }).join('');
 
+            // 最適化統計の表示
+            let statsHtml = '';
+            if (q.stats) {
+                const igColor = q.stats.ig > 2.0 ? '#28a745' : q.stats.ig > 0.5 ? '#ffc107' : '#6c757d';
+                const termColor = q.stats.termProb > 0.5 ? '#dc3545' : q.stats.termProb > 0.2 ? '#ffc107' : '#17a2b8';
+                statsHtml = `
+                    <div style="display: flex; gap: 15px; margin-top: 10px; font-size: 0.8em;">
+                        <span style="background: ${igColor}20; color: ${igColor}; padding: 3px 8px; border-radius: 4px;">
+                            IG: ${q.stats.ig.toFixed(2)}
+                        </span>
+                        <span style="background: ${termColor}20; color: ${termColor}; padding: 3px 8px; border-radius: 4px;">
+                            終了率: ${(q.stats.termProb * 100).toFixed(0)}%
+                        </span>
+                    </div>
+                `;
+            }
+
             container.innerHTML = `
                 <div class="question-card">
                     <span class="question-number">${q.id} (質問 ${questionCount})</span>
+                    ${statsHtml}
                     <h2 class="question-text">${q.text}</h2>
                     ${q.info ? `<div class="question-info">${q.info}</div>` : ''}
                     <ul class="options-list">${optionsHtml}</ul>
