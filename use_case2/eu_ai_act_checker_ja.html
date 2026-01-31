@@ -827,12 +827,42 @@
         // 質問レンダリング
         function renderQuestion() {
             const q = questions[currentQuestion];
-            if (!q) return;
+
+            // 質問配列の終わりに達したら結果を表示
+            if (!q || currentQuestion >= questions.length) {
+                showResult();
+                return;
+            }
 
             // 条件チェック
             if (q.condition) {
-                if (q.condition.question && answers[q.condition.question] !== q.condition.value) {
+                // notValue条件のチェック
+                if (q.condition.notValue) {
+                    const ans = answers[q.condition.question];
+                    const isNone = (ans === q.condition.notValue) ||
+                                   (Array.isArray(ans) && ans.length === 1 && ans[0] === q.condition.notValue) ||
+                                   (Array.isArray(ans) && ans.length === 0);
+                    if (isNone) {
+                        currentQuestion++;
+                        renderQuestion();
+                        return;
+                    }
+                }
+                // value条件のチェック
+                if (q.condition.question && q.condition.value && answers[q.condition.question] !== q.condition.value) {
                     if (!q.condition.values || !q.condition.values.some(v => (answers[q.condition.question] || []).includes(v))) {
+                        currentQuestion++;
+                        renderQuestion();
+                        return;
+                    }
+                }
+                // values条件のチェック（複数値のいずれかにマッチ）
+                if (q.condition.values && !q.condition.value) {
+                    const ans = answers[q.condition.question] || [];
+                    const hasMatch = q.condition.values.some(v =>
+                        Array.isArray(ans) ? ans.includes(v) : ans === v
+                    );
+                    if (!hasMatch) {
                         currentQuestion++;
                         renderQuestion();
                         return;
