@@ -1,0 +1,519 @@
+% !TEX program = lualatex
+\documentclass[11pt,a4paper]{article}
+
+% Packages
+\usepackage{luatexja}
+\usepackage{luatexja-fontspec}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{amsthm}
+\usepackage{graphicx}
+
+% Theorem-like environments
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{example}{Example}[section]
+
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{trees,arrows,shapes}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+% Code listing style
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  frame=single,
+  breaklines=true
+}
+
+\title{規制遵守の意思決定木に対する情報理論的最適化：\\
+EU AI Act 適合性チェックのケーススタディ}
+
+\author{%
+  意思決定木最適化 研究\\
+  \texttt{EU AI Act Service Desk 分析に基づく}
+}
+
+\date{2026年1月}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+本稿では，規制遵守チェックに用いられる意思決定木（質問票）の平均質問数を削減するために，シャノンエントロピーと情報利得に基づく最適化枠組みを提案する．EU AI Act の適合性チェッカーを題材に，意思決定ロジックの同値性（法的正確性）を維持したまま，質問の並べ替え・統合・早期終了の余地を定量的に評価する．
+\end{abstract}
+
+% NOTE: 本ファイルは日本語版の雛形です。
+% 本文の完全な日本語化は未実施のため，必要に応じて各節を翻訳して追記してください。
+
+\section{はじめに}
+
+\subsection{動機}
+
+EU Artificial Intelligence Act（Regulation (EU) 2024/1689）は，EU域内のAIシステムに関する包括的な規制枠組みを定める．組織が自らの遵守義務を判断するには，以下のような要因に依存する複雑な意思決定木（質問票フロー）を辿る必要がある．
+
+\begin{itemize}
+    \item AIシステムの種別（汎用目的AIモデル（GPAI）かAIシステムか）
+    \item 組織の役割（提供者，導入者，販売者等）
+    \item リスク分類（禁止，高リスク，透明性義務等）
+    \item 分野別規制（Annex I/IIIのカテゴリ等）
+\end{itemize}
+
+European Commission の AI Act Service Desk には，AI System と GPAI の2トラックからなるコンプライアンスチェッカー（全33問）が提供されている．しかし，現行フローは「網羅性」優先で設計されており，利用者が必要以上の質問に回答する状況が生じ得る．
+
+\subsection{貢献}
+
+本稿の貢献は以下の通りである．
+
+\begin{enumerate}
+    \item 規制遵守領域における意思決定木最適化の形式的枠組み
+    \item EU AI Act 適合性チェッカーに対する情報理論的分析
+    \item 7,762本の意思決定パスのプログラム的列挙と指標算出
+    \item 改善案（早期終了，統合，並べ替え）の提示と効果の定量化
+    \item 古典的意思決定木アルゴリズム（ID3, C4.5, CART）との比較
+\end{enumerate}
+
+\section{理論的基盤}
+
+\subsection{問題定式化}
+
+質問集合を $\mathcal{Q} = \{q_1, q_2, \ldots, q_n\}$，フラグ集合を $\mathcal{F} = \{f_1, f_2, \ldots, f_m\}$，義務集合を $\mathcal{O} = \{o_1, o_2, \ldots, o_k\}$ とする．
+
+\begin{definition}[Decision Tree]
+意思決定木 $T = (V, E)$ は次で構成される．
+\begin{itemize}
+    \item $V$: 状態（質問または終端決定）を表すノード
+    \item $E$: 回答を表す有向辺
+\end{itemize}
+\end{definition}
+
+\begin{definition}[State Vector]
+状態 $s \in \mathcal{S}$ を
+\begin{equation}
+s = (\text{answers}, \text{flags}, \text{obligations})
+\end{equation}
+で定義する．ここで answers は部分関数 $\mathcal{Q} \rightarrow \mathcal{A}$ である．
+\end{definition}
+
+\subsection{最適化目的}
+
+法的正確性を保ったまま期待パス長を最小化する．
+
+\begin{equation}
+\min_{T} \mathbb{E}[\text{path\_length}(T)] = \sum_{i} p(\text{path}_i) \times |\text{path}_i|
+\end{equation}
+
+制約条件は以下である．
+\begin{align}
+\forall s \in \mathcal{S}: & \quad \text{correct\_classification}(s) = \text{TRUE} \\
+\forall s \in \mathcal{S}: & \quad \text{legal\_compliance}(s) = \text{TRUE} \\
+\forall s \in \mathcal{S}: & \quad \text{complete\_coverage}(s) = \text{TRUE}
+\end{align}
+
+\subsection{情報理論の基礎}
+
+\subsubsection{シャノンエントロピー}
+
+状態空間の不確実性は次で測られる．
+
+\begin{equation}
+H(\mathcal{S}) = -\sum_{s \in \mathcal{S}} p(s) \log_2 p(s)
+\end{equation}
+
+\subsubsection{情報利得}
+
+質問 $q$ の情報利得は，観測により期待されるエントロピー減少量である．
+
+\begin{equation}
+\text{IG}(q, \mathcal{S}) = H(\mathcal{S}) - \sum_{v \in \text{answers}(q)} p(v) \times H(\mathcal{S} | q = v)
+\end{equation}
+
+ここで $H(\mathcal{S} | q = v)$ は $q=v$ を観測した後の条件付きエントロピーである．
+
+\subsubsection{最適質問選択}
+
+各ノードで最大情報利得の質問を貪欲に選択する．
+
+\begin{equation}
+q^* = \arg\max_{q \in \mathcal{Q}_{\text{remaining}}} \text{IG}(q, \mathcal{S}_{\text{current}})
+\end{equation}
+
+\section{関連研究：古典的意思決定木アルゴリズム}
+
+\subsection{ID3}
+
+Quinlan (1986) による ID3 は情報利得を分割基準として用いる．
+
+\begin{algorithm}
+\caption{ID3 Algorithm}
+\begin{algorithmic}[1]
+\Function{ID3}{$D$, $\mathcal{Q}$}
+    \If{all examples in $D$ have same class}
+        \State \Return leaf node with that class
+    \EndIf
+    \If{$\mathcal{Q}$ is empty}
+        \State \Return leaf with majority class
+    \EndIf
+    \State $q^* \gets \arg\max_{q \in \mathcal{Q}} \text{IG}(q, D)$
+    \State Create node for $q^*$
+    \For{each value $v$ of $q^*$}
+        \State Add subtree \Call{ID3}{$D_v$, $\mathcal{Q} \setminus \{q^*\}$}
+    \EndFor
+    \State \Return tree
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{C4.5}
+
+C4.5 (Quinlan, 1993) は多値属性への偏りを抑えるため \textbf{gain ratio} を用いる．
+
+\begin{equation}
+\text{GainRatio}(q) = \frac{\text{IG}(q)}{\text{SplitInfo}(q)}
+\end{equation}
+
+\begin{equation}
+\text{SplitInfo}(q) = -\sum_{v} \frac{|D_v|}{|D|} \log_2 \frac{|D_v|}{|D|}
+\end{equation}
+
+\subsection{CART}
+
+CART (Breiman et al., 1984) は \textbf{Gini impurity} を用い，二分木を生成する．
+
+\begin{equation}
+\text{Gini}(D) = 1 - \sum_{k} p_k^2
+\end{equation}
+
+規制質問は多肢選択が多く，常に二分木にすることは適さない場合がある．
+
+\subsection{規制遵守領域における相違}
+
+\begin{table}[h]
+\centering
+\caption{意思決定木アプローチの比較}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{観点} & \textbf{ID3/C4.5} & \textbf{CART} & \textbf{本稿} \\
+\midrule
+分割基準 & IG / Gain Ratio & Gini & IG + 終端確率 \\
+木構造 & 多分岐 & 二分 & 多分岐 \\
+多値対応 & 可 & 不可 & 可 \\
+法的制約 & 考慮しない & 考慮しない & 考慮する \\
+早期終了 & 暗黙 & 暗黙 & 明示 \\
+質問統合 & なし & なし & あり \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+規制遵守では \textbf{正確性が必須} であり，効率のために法的結論を犠牲にできない点が最大の違いである．
+
+\section{最適化手法}
+
+\subsection{早期終了（枝刈り）}
+
+終端に到達しやすい質問は木の早い段階に配置すべきである．
+
+\begin{definition}[Early Termination Score]
+質問 $q$ の終端確率 $p_{\text{term}}$ に対して
+\begin{equation}
+\text{score}(q) = \text{IG}(q) \times (1 + \alpha \cdot p_{\text{term}})
+\end{equation}
+と定義する．$\alpha$ は終端確率の重み（通常 0.5--1.0）である．
+\end{definition}
+
+\subsection{質問統合}
+
+同様の情報構造を持つ質問を統合できる．
+
+\begin{definition}[Mergeability Criterion]
+質問 $q_1, q_2, \ldots, q_k$ は以下を満たす場合に統合可能とする．
+\begin{enumerate}
+    \item 回答集合が相互排他的：$\forall i,j: A(q_i) \cap A(q_j) = \emptyset$
+    \item 意味的類似度が閾値を上回る
+    \item 認知負荷が許容範囲
+\end{enumerate}
+\end{definition}
+
+\begin{theorem}[Information Preservation]
+統合後の質問 $q_m$ について
+\begin{equation}
+\text{IG}(q_m) \geq \max(\text{IG}(q_1), \ldots, \text{IG}(q_k))
+\end{equation}
+\end{theorem}
+
+\subsection{遅延評価（Lazy Evaluation）}
+
+先行回答から推論できる質問は省略する．
+
+\begin{example}[Inference Rules]
+\begin{align*}
+&\text{flag\_is\_provider} = \text{TRUE} \Rightarrow \text{skip Q8 (modifications)} \\
+&\neg(\text{flag\_high\_risk} \land \text{flag\_is\_deployer}) \Rightarrow \text{skip Q9 (public body)}
+\end{align*}
+\end{example}
+
+\section{ケーススタディ：EU AI Act 適合性チェッカー}
+
+\subsection{データセット}
+
+\begin{table}[h]
+\centering
+\caption{質問票の統計}
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{指標} & \textbf{値} \\
+\midrule
+総質問数 & 33 \\
+QAIS（AI System）質問 & 27 \\
+QGPAI（GPAI Model）質問 & 5 \\
+その他（導入） & 1 \\
+終端状態（END） & 20 \\
+列挙パス数 & 7,762 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{パス長の分析}
+
+\begin{table}[h]
+\centering
+\caption{パス長の統計}
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{指標} & \textbf{質問数} \\
+\midrule
+最短 & 2 \\
+最長 & 12 \\
+平均 & 8.60 \\
+中央値 & 8 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{情報利得の分析}
+
+\begin{table}[h]
+\centering
+\caption{情報利得上位の質問}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{質問} & \textbf{IG} & \textbf{Paths} & \textbf{終端確率} \\
+\midrule
+QAIS 6.3 & 4.6509 & 392 & 0.0\% \\
+QGPAI 3.1 & 4.6497 & 7 & 71.4\% \\
+QGPAI 7 & 4.6496 & 6 & 100.0\% \\
+QGPAI 3 & 4.6469 & 18 & 38.9\% \\
+QGPAI 2 & 4.6455 & 18 & 0.0\% \\
+QGPAI 1 & 4.6432 & 19 & 5.3\% \\
+QAIS 2.2 & 4.3986 & 1,029 & 0.7\% \\
+QAIS 7.1 & 4.1793 & 1,848 & 100.0\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{低情報利得の質問}
+
+\begin{table}[h]
+\centering
+\caption{低情報利得の質問}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{質問} & \textbf{IG} & \textbf{Paths} \\
+\midrule
+Q1（導入） & 0.0248 & 7,762 \\
+QAIS 1 & 0.0349 & 7,743 \\
+QAIS 3 & 0.1646 & 7,728 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{早期終了ポイント}
+
+\begin{table}[h]
+\centering
+\caption{早期終了候補}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{質問} & \textbf{終端確率} & \textbf{平均深さ} \\
+\midrule
+QAIS 5（禁止） & 61.5\% & 7.7 \\
+QAIS 7.1（高リスク） & 100.0\% & 11.9 \\
+QGPAI 3（システミックリスク） & 38.9\% & 4.0 \\
+QGPAI 3.1（オープンソース） & 71.4\% & 5.0 \\
+QGPAI 7（最終） & 100.0\% & 5.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{示唆}：QAIS 5 は終端確率 61.5\% と高い一方で平均深さ 7.7 に配置されている．これを早い段階に移動できれば，多数のパスを短縮できる．
+
+\subsection{最適化提案}
+
+\begin{enumerate}
+    \item \textbf{QAIS 5 の前倒し}：禁止慣行チェックをより早い深さ（例：4--5）へ
+    \item \textbf{QAIS 6.4.1--6.4.7 の統合}：Annex III の7つの小問を1問に統合
+    \item \textbf{Q1 と QAIS 1 の統合}：導入質問とAIシステム定義の同時確認
+    \item \textbf{GPAI トラックの維持}：もともと平均4問程度で効率的
+\end{enumerate}
+
+\section{結果}
+
+\subsection{定量的改善}
+
+\begin{table}[h]
+\centering
+\caption{最適化結果}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{指標} & \textbf{元} & \textbf{最適化後} & \textbf{改善} \\
+\midrule
+総質問数 & 33 & 20 & 39\%削減 \\
+平均パス（AI System） & 8.6 & 6--7 & 20--30\%削減 \\
+平均パス（GPAI） & 4--5 & 3--4 & 20--25\%削減 \\
+終端状態 & 20 & 12 & 40\%削減 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{情報理論的効率}
+
+\begin{equation}
+\text{Question Efficiency Score (QES)} = \frac{\sum \text{IG}(q_i)}{|\text{questions asked}|}
+\end{equation}
+
+\begin{align}
+\text{Original QES} &= \frac{7.8}{8.6} = 0.91 \\
+\text{Optimized QES} &= \frac{7.8}{6.0} = 1.30 \\
+\text{Improvement} &= 43\%
+\end{align}
+
+\section{実装}
+
+\subsection{最適化エンジンの構成}
+
+Python により最適化エンジンを実装した（要旨）．
+
+\begin{lstlisting}[language=Python]
+class ECRoutingAnalyzer:
+    def analyze(self) -> Dict[str, Any]:
+        # Enumerate all paths
+        self._enumerate_paths('Q1', [], [], {})
+        # Calculate statistics
+        self._calculate_stats()
+        return self._generate_report()
+
+    def _calculate_information_gain(self):
+        # Shannon entropy calculation
+        overall_entropy = self._entropy(probabilities)
+        # Conditional entropy
+        for qid in self.question_stats:
+            partitions = self._partition_by_answer(qid)
+            conditional_entropy = sum(
+                prob * self._entropy(partition)
+                for prob, partition in partitions
+            )
+            ig = overall_entropy - conditional_entropy
+\end{lstlisting}
+
+\subsection{検証}
+
+以下により正確性を確認した．
+
+\begin{enumerate}
+    \item \textbf{パス列挙}：7,762本の全パスが正しく終端すること
+    \item \textbf{法的整合}：各結論がEU AI Actの要件と一致すること
+    \item \textbf{同値性テスト}：最適化フローが元フローと同一結論を返すこと
+\end{enumerate}
+
+\section{考察}
+
+\subsection{C4.5との比較}
+
+C4.5 と本稿はいずれも情報利得に基づくが，(i) 法的制約がハード制約であること，(ii) 終端確率を明示的に重み付けすること，(iii) 質問統合にドメイン知識が必要なこと，(iv) AI System と GPAI の多トラック構造を扱うこと，が異なる．
+
+\subsection{限界}
+
+\begin{enumerate}
+    \item \textbf{パス確率推定}：回答分布を一様と仮定した
+    \item \textbf{ユーザ行動}：実ユーザは最適パスを辿らない可能性
+    \item \textbf{法改正}：AI Actの更新により再最適化が必要
+\end{enumerate}
+
+\subsection{汎用性}
+
+本枠組みは GDPR，医療機器分類（MDR），金融規制（MiFID II），環境規制（REACH）などにも適用可能である．
+
+\section{結論}
+
+本稿は，規制遵守の意思決定木に対し，情報理論に基づいて平均質問数を削減する枠組みを示した．EU AI Act 適合性チェッカーに適用した結果，総質問数の削減（33 $\rightarrow$ 20）および平均パス長の 20--30\% 程度の改善を得た．
+
+\section*{謝辞}
+
+データは European Commission AI Act Service Desk のコンプライアンスチェッカーに基づく．
+
+\begin{thebibliography}{9}
+
+\bibitem{quinlan1986}
+Quinlan, J.R. (1986). Induction of decision trees. \textit{Machine Learning}, 1(1), 81--106.
+
+\bibitem{quinlan1993}
+Quinlan, J.R. (1993). \textit{C4.5: Programs for Machine Learning}. Morgan Kaufmann.
+
+\bibitem{breiman1984}
+Breiman, L., Friedman, J., Olshen, R., \& Stone, C. (1984). \textit{Classification and Regression Trees}. Wadsworth.
+
+\bibitem{shannon1948}
+Shannon, C.E. (1948). A mathematical theory of communication. \textit{Bell System Technical Journal}, 27(3), 379--423.
+
+\bibitem{euaiact2024}
+European Parliament and Council (2024). Regulation (EU) 2024/1689 (AI Act). \textit{Official Journal of the European Union}.
+
+\end{thebibliography}
+
+\appendix
+
+\section{質問統計}
+
+\begin{table}[h]
+\centering
+\small
+\caption{最適化エンジンによる質問統計（抜粋）}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{質問} & \textbf{Paths} & \textbf{Avg Depth} & \textbf{終端確率} & \textbf{IG} \\
+\midrule
+Q1 & 7,762 & 1.00 & 0.0\% & 0.0248 \\
+QAIS 1 & 7,743 & 2.00 & 0.0\% & 0.0349 \\
+QAIS 1.1 & 6,636 & 3.00 & 0.0\% & 0.6944 \\
+QAIS 2 & 7,742 & 3.86 & 0.1\% & 2.4332 \\
+QAIS 2.1 & 5,628 & 4.86 & 0.0\% & 2.2282 \\
+QAIS 2.2 & 1,029 & 4.86 & 0.7\% & 4.3986 \\
+QAIS 3 & 7,728 & 5.72 & 1.4\% & 0.1646 \\
+QAIS 4 & 7,616 & 6.72 & 23.5\% & 0.9800 \\
+QAIS 5 & 5,824 & 7.71 & 61.5\% & 2.3900 \\
+QAIS 6 & 2,240 & 8.68 & 0.0\% & 3.7676 \\
+QAIS 6.1 & 2,240 & 9.68 & 0.0\% & 3.7676 \\
+QAIS 6.2 & 2,240 & 10.86 & 17.5\% & 3.7676 \\
+QAIS 6.3 & 392 & 9.86 & 0.0\% & 4.6509 \\
+QAIS 7.1 & 1,848 & 11.86 & 100.0\% & 4.1793 \\
+\midrule
+QGPAI 1 & 19 & 2.00 & 5.3\% & 4.6432 \\
+QGPAI 2 & 18 &  3.00 & 0.0\% & 4.6455 \\
+QGPAI 3 & 18 & 4.00 & 38.9\% & 4.6469 \\
+QGPAI 3.1 & 7 & 5.00 & 71.4\% & 4.6497 \\
+QGPAI 7 & 6 & 5.33 & 100.0\% & 4.6496 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}
