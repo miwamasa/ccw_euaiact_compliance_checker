@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EU AI法コンプライアンスチェッカー</title>
+    <style>
+        :root {
+            --primary-color: #003399;
+            --secondary-color: #ffcc00;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-bg: #f8f9fa;
+            --dark-text: #212529;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+            line-height: 1.6;
+            color: var(--dark-text);
+            background-color: var(--light-bg);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), #0066cc);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 0.95em;
+        }
+
+        .mode-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+
+        .mode-tab {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .mode-tab:hover {
+            background: #e9ecef;
+        }
+
+        .mode-tab.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .panel {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .question-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .question-number {
+            display: inline-block;
+            background: var(--primary-color);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 1.15em;
+            font-weight: 600;
+            color: var(--dark-text);
+            margin-bottom: 15px;
+        }
+
+        .question-info {
+            background: #f0f7ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            border-left: 4px solid var(--info-color);
+        }
+
+        .options-list {
+            list-style: none;
+        }
+
+        .option-item {
+            margin-bottom: 10px;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: flex-start;
+            padding: 15px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-label:hover {
+            border-color: var(--primary-color);
+            background: #f0f7ff;
+        }
+
+        .option-label input {
+            margin-right: 12px;
+            margin-top: 3px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .option-text {
+            flex: 1;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            font-size: 1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #002266;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            color: var(--dark-text);
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .result-card {
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .result-outofscope {
+            background: #e9ecef;
+            border: 2px solid #6c757d;
+        }
+
+        .result-excluded {
+            background: #d1ecf1;
+            border: 2px solid var(--info-color);
+        }
+
+        .result-prohibited {
+            background: #f8d7da;
+            border: 2px solid var(--danger-color);
+        }
+
+        .result-compliance {
+            background: #d4edda;
+            border: 2px solid var(--success-color);
+        }
+
+        .result-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .obligations-list {
+            list-style: disc;
+            padding-left: 25px;
+            margin-top: 15px;
+        }
+
+        .obligations-list li {
+            margin-bottom: 8px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        /* 逆引きモード */
+        .reverse-section {
+            margin-bottom: 30px;
+        }
+
+        .reverse-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--secondary-color);
+        }
+
+        .result-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .result-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(0, 51, 153, 0.15);
+        }
+
+        .result-item.expanded {
+            border-color: var(--primary-color);
+            border-width: 2px;
+        }
+
+        .result-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-item-title {
+            font-weight: 600;
+            font-size: 1.05em;
+        }
+
+        .result-item-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .badge-high-risk {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-prohibited {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-gpai {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-transparency {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .result-item-details {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .result-item.expanded .result-item-details {
+            display: block;
+        }
+
+        .path-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .path-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .path-number {
+            width: 28px;
+            height: 28px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .path-arrow {
+            color: var(--primary-color);
+            margin: 0 10px;
+        }
+
+        .legal-ref {
+            background: #f0f7ff;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        @media (max-width: 600px) {
+            .mode-tabs {
+                flex-direction: column;
+            }
+
+            .mode-tab {
+                text-align: center;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            header h1 {
+                font-size: 1.4em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>EU AI法コンプライアンスチェッカー</h1>
+            <p>AI法(EU) 2024/1689 に基づく義務を判定するツール</p>
+        </header>
+
+        <div class="mode-tabs">
+            <button class="mode-tab active" onclick="switchMode('checker')">コンプライアンスチェック</button>
+            <button class="mode-tab" onclick="switchMode('reverse')">逆引き（義務から条件を確認）</button>
+        </div>
+
+        <!-- チェッカーモード -->
+        <div id="checker-panel" class="panel active">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+
+            <div id="question-container"></div>
+            <div id="result-container" style="display: none;"></div>
+
+            <div class="button-group" id="button-group">
+                <button class="btn btn-secondary" onclick="prevQuestion()" id="prev-btn" style="display: none;">前へ</button>
+                <button class="btn btn-primary" onclick="nextQuestion()" id="next-btn">次へ</button>
+                <button class="btn btn-success" onclick="restart()" id="restart-btn" style="display: none;">最初からやり直す</button>
+            </div>
+        </div>
+
+        <!-- 逆引きモード -->
+        <div id="reverse-panel" class="panel">
+            <div class="reverse-section">
+                <h3>分類結果から必要な条件を確認</h3>
+                <p style="margin-bottom: 20px;">以下の結果カテゴリをクリックすると、その結果に至るために必要な条件が表示されます。</p>
+
+                <div id="reverse-results"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 質問データ（日本語）
+        const questions = [
+            {
+                id: 'Q1',
+                text: 'あなたのAIシステムはEUと何らかの関連がありますか？',
+                info: 'EU市場への投入、EU内での使用、EU内での開発など、いずれかに該当する場合は「はい」を選択してください。',
+                type: 'single',
+                options: [
+                    { value: 'no', label: 'いいえ - EU市場に投入せず、EUで使用せず、EU内にいない', terminal: true, flag: 'out_of_scope' },
+                    { value: 'yes', label: 'はい - 上記のいずれかに該当する' }
+                ]
+            },
+            {
+                id: 'Q2',
+                text: 'あなたはこのAIシステムにおいてどのような役割を担っていますか？',
+                info: '複数の役割に該当する場合は、すべて選択してください。各役割に応じた義務が課されます。',
+                type: 'multiple',
+                options: [
+                    { value: 'provider', label: 'プロバイダー（開発者/提供者） - 自社名義でAIシステムを開発または市場投入' },
+                    { value: 'deployer', label: 'デプロイヤー（利用者） - AIシステムを自己の権限下で使用・運用' },
+                    { value: 'distributor', label: 'ディストリビューター（販売者） - EU市場でAIシステムを流通' },
+                    { value: 'importer', label: 'インポーター（輸入者） - EU外からEU市場にAIシステムを投入' },
+                    { value: 'product_manufacturer', label: '製品製造者 - AI統合製品を自社ブランドで製造' },
+                    { value: 'authorised_rep', label: '認定代理人 - EU外プロバイダーの代理', terminal: true, flag: 'authorised_rep' }
+                ]
+            },
+            {
+                id: 'Q3',
+                text: 'あなたのシステムは以下の除外カテゴリに該当しますか？',
+                info: 'これらに該当する場合、EU AI法の適用範囲外となります。',
+                type: 'multiple',
+                options: [
+                    { value: 'military', label: '軍事目的のみで使用', terminal: true, flag: 'excluded' },
+                    { value: 'personal', label: '個人的・非職業的使用のみ', terminal: true, flag: 'excluded' },
+                    { value: 'research', label: '科学研究・開発目的のみ', terminal: true, flag: 'excluded' },
+                    { value: 'opensource', label: 'オープンソース（未市場投入）', terminal: true, flag: 'excluded' },
+                    { value: 'third_country', label: '第三国の法執行機関', terminal: true, flag: 'excluded' },
+                    { value: 'none', label: '上記に該当しない' }
+                ]
+            },
+            {
+                id: 'Q4',
+                text: 'あなたのシステムは以下の禁止機能を実行しますか？',
+                info: 'これらの機能は第5条により禁止されています。該当するシステムはEU市場に投入できません。',
+                type: 'multiple',
+                options: [
+                    { value: 'subliminal', label: 'サブリミナル技術・操作・欺瞞', terminal: true, flag: 'prohibited' },
+                    { value: 'exploit', label: '脆弱性の悪用（年齢・障害・社会経済的状況）', terminal: true, flag: 'prohibited' },
+                    { value: 'social_scoring', label: '公的機関によるソーシャルスコアリング', terminal: true, flag: 'prohibited' },
+                    { value: 'predictive_policing', label: '個人特性に基づく予測的取締', terminal: true, flag: 'prohibited' },
+                    { value: 'facial_scraping', label: '無差別の顔認識データベース構築', terminal: true, flag: 'prohibited' },
+                    { value: 'emotion_work', label: '職場・教育機関での感情認識（医療・安全以外）', terminal: true, flag: 'prohibited' },
+                    { value: 'biometric_cat', label: '機密データ推測のための生体認証分類', terminal: true, flag: 'prohibited' },
+                    { value: 'realtime_rbi', label: '公共空間でのリアルタイム遠隔生体認証', terminal: true, flag: 'prohibited' },
+                    { value: 'none', label: '上記に該当しない' }
+                ]
+            },
+            {
+                id: 'Q5',
+                text: '汎用AI（GPAI）モデルをEU市場に投入していますか？',
+                info: 'GPAIモデルとは、広範なデータで訓練され、多様なタスクに使用可能な基盤モデル（例：GPT、Claude、LLaMAなど）を指します。',
+                type: 'single',
+                options: [
+                    { value: 'yes', label: 'はい - GPAIモデルを市場投入している', next: 'Q5A' },
+                    { value: 'no', label: 'いいえ - AIシステム/アプリケーションのみ' }
+                ]
+            },
+            {
+                id: 'Q5A',
+                text: 'GPAIモデルは高影響能力を持っていますか？',
+                info: '訓練に10^25 FLOP以上を使用した場合、または欧州委員会により指定された場合に該当します。',
+                type: 'single',
+                options: [
+                    { value: 'yes', label: 'はい - 10^25 FLOP以上または委員会指定' },
+                    { value: 'no', label: 'いいえ - 閾値未満' }
+                ],
+                condition: { question: 'Q5', value: 'yes' }
+            },
+            {
+                id: 'Q6',
+                text: 'あなたのAIシステムは以下のハイリスクカテゴリに該当しますか？',
+                info: '附属書Iおよび附属書IIIに規定されるハイリスクAIシステムのカテゴリです。',
+                type: 'multiple',
+                options: [
+                    { value: 'annex_i_a', label: '附属書I-A: 安全部品（機械、医療機器、玩具等）', next: 'Q6A' },
+                    { value: 'annex_i_b', label: '附属書I-B: 輸送・航空', next: 'Q6A' },
+                    { value: 'biometrics', label: '生体認証・分類', next: 'Q6B' },
+                    { value: 'critical_infra', label: '重要インフラ（水、ガス、電力等）', next: 'Q6B' },
+                    { value: 'education', label: '教育・職業訓練', next: 'Q6B' },
+                    { value: 'employment', label: '雇用・人事管理', next: 'Q6B' },
+                    { value: 'essential_services', label: '必須サービスへのアクセス', next: 'Q6B' },
+                    { value: 'law_enforcement', label: '法執行', next: 'Q6B' },
+                    { value: 'migration', label: '移民・国境管理', next: 'Q6B' },
+                    { value: 'justice', label: '司法・民主的プロセス', next: 'Q6B' },
+                    { value: 'none', label: '上記に該当しない' }
+                ]
+            },
+            {
+                id: 'Q6A',
+                text: '第三者適合性評価が必要な製品ですか？',
+                info: '附属書Iに記載されている関連EU製品安全法に基づく要件を確認してください。',
+                type: 'single',
+                options: [
+                    { value: 'yes', label: 'はい - 第三者適合性評価が必要' },
+                    { value: 'no', label: 'いいえ、または第43条(3)によりオプトアウト可能' }
+                ],
+                condition: { question: 'Q6', values: ['annex_i_a', 'annex_i_b'] }
+            },
+            {
+                id: 'Q6B',
+                text: 'システムは健康、安全、または基本的権利に重大なリスクをもたらしますか？',
+                info: '狭い手続き的タスクのみ、人間の活動の改善、パターン検出（人間の評価を代替しない）、または準備的タスクの場合は「いいえ」を選択できます。ただし、自然人のプロファイリングを行う場合は常に「はい」を選択してください。',
+                type: 'single',
+                options: [
+                    { value: 'yes', label: 'はい - 重大なリスクあり（またはプロファイリングを実行）' },
+                    { value: 'no', label: 'いいえ - 例外基準を満たす' }
+                ],
+                condition: { question: 'Q6', notValue: 'none' }
+            },
+            {
+                id: 'Q7',
+                text: 'あなたのAIシステムはどのような機能を実行しますか？',
+                info: '透明性義務は第50条に規定されています。',
+                type: 'multiple',
+                options: [
+                    { value: 'interact', label: '人との直接的なインタラクション（チャットボット等）' },
+                    { value: 'synthetic', label: '合成コンテンツの生成（音声、画像、動画、テキスト）' },
+                    { value: 'emotion', label: '感情認識または生体認証分類' },
+                    { value: 'deepfake', label: 'ディープフェイク（操作された画像/音声/動画）の生成' },
+                    { value: 'text_public', label: '公共の関心事に関するテキストの生成/操作' },
+                    { value: 'none', label: '上記に該当しない' }
+                ]
+            },
+            {
+                id: 'Q8',
+                text: '既存のAIシステムに重大な変更を加えましたか？',
+                info: 'これらの変更を行った場合、プロバイダーとして扱われます（第25条）。',
+                type: 'multiple',
+                options: [
+                    { value: 'trademark', label: '異なる名称/商標の適用' },
+                    { value: 'purpose', label: '意図された目的の変更' },
+                    { value: 'substantial', label: '重大な変更（第3条23号）' },
+                    { value: 'none', label: '変更なし' }
+                ],
+                condition: { role: 'not_provider' }
+            },
+            {
+                id: 'Q9',
+                text: 'あなたは公的機関または公共サービス提供者ですか？',
+                info: '基本的権利影響評価は第27条に規定されています。',
+                type: 'single',
+                options: [
+                    { value: 'yes', label: 'はい' },
+                    { value: 'no', label: 'いいえ' }
+                ],
+                condition: { flags: ['high_risk', 'deployer'] }
+            }
+        ];
+
+        // 義務データ（日本語）
+        const obligations = {
+            'ai_literacy': {
+                title: 'AIリテラシー',
+                description: 'スタッフに十分なAIリテラシーを確保する措置を講じる義務（第4条）',
+                applies_to: ['provider', 'deployer'],
+                article: '第4条'
+            },
+            'provider_high_risk': {
+                title: 'ハイリスクAIプロバイダー義務',
+                description: 'リスク管理、データガバナンス、技術文書、適合性評価等（第8条-第21条）',
+                applies_to: ['provider'],
+                article: '第16条'
+            },
+            'deployer_high_risk': {
+                title: 'ハイリスクAIデプロイヤー義務',
+                description: '使用説明書に従った使用、人間による監視、データ入力の関連性確保等',
+                applies_to: ['deployer'],
+                article: '第26条'
+            },
+            'gpai_base': {
+                title: 'GPAI基本義務',
+                description: '技術文書、EU著作権法の遵守、訓練データの概要公開等',
+                applies_to: ['provider'],
+                article: '第53条'
+            },
+            'gpai_systemic': {
+                title: 'GPAIシステミックリスク義務',
+                description: 'モデル評価、システミックリスク評価・軽減、インシデント報告等',
+                applies_to: ['provider'],
+                article: '第55条'
+            },
+            'transparency_natural': {
+                title: '透明性：自然人との対話',
+                description: 'AIシステムとの対話であることを通知する義務',
+                applies_to: ['provider'],
+                article: '第50条(1)'
+            },
+            'transparency_synthetic': {
+                title: '透明性：合成コンテンツ',
+                description: 'AI生成コンテンツであることを機械可読形式でマーキングする義務',
+                applies_to: ['provider'],
+                article: '第50条(2)'
+            },
+            'transparency_emotion': {
+                title: '透明性：感情認識/生体認証',
+                description: '感情認識または生体認証分類システムの対象者への通知義務',
+                applies_to: ['deployer'],
+                article: '第50条(3)'
+            },
+            'transparency_deepfake': {
+                title: '透明性：ディープフェイク',
+                description: 'AI生成/操作コンテンツであることの開示義務',
+                applies_to: ['deployer'],
+                article: '第50条(4)'
+            },
+            'fundamental_rights': {
+                title: '基本的権利影響評価',
+                description: 'ハイリスクAIシステム導入前の基本的権利への影響評価',
+                applies_to: ['deployer'],
+                article: '第27条'
+            },
+            'handover': {
+                title: '引継ぎ義務',
+                description: '変更を加えた事業者への情報・資料・アクセスの提供',
+                applies_to: ['provider'],
+                article: '第25条'
+            }
+        };
+
+        // 逆引きデータ
+        const reverseData = [
+            {
+                id: 'prohibited',
+                title: '禁止AIシステム',
+                badge: 'badge-prohibited',
+                badgeText: '禁止',
+                description: 'EU AI法第5条により、以下の機能を持つAIシステムはEU市場への投入が禁止されています。',
+                conditions: [
+                    { step: 1, text: 'EUとの関連がある', answer: 'Q1 = はい' },
+                    { step: 2, text: '禁止機能のいずれかを実行する', answer: 'Q4 ≠ 該当なし' }
+                ],
+                functions: [
+                    'サブリミナル技術・操作・欺瞞',
+                    '年齢、障害、社会経済的状況などの脆弱性の悪用',
+                    '公的機関によるソーシャルスコアリング',
+                    '個人特性に基づく犯罪予測',
+                    '無差別の顔認識データベース構築',
+                    '職場・教育機関での感情認識（医療・安全目的を除く）',
+                    '機密データを推測するための生体認証分類',
+                    '公共空間でのリアルタイム遠隔生体認証'
+                ],
+                legalRef: '第5条'
+            },
+            {
+                id: 'high_risk',
+                title: 'ハイリスクAIシステム',
+                badge: 'badge-high-risk',
+                badgeText: 'ハイリスク',
+                description: '以下の条件を満たすAIシステムはハイリスクに分類され、厳格な義務が課されます。',
+                conditions: [
+                    { step: 1, text: 'EUとの関連がある', answer: 'Q1 = はい' },
+                    { step: 2, text: '禁止機能に該当しない', answer: 'Q4 = 該当なし' },
+                    { step: 3, text: 'ハイリスクカテゴリに該当', answer: 'Q6 = 附属書I/IIIのいずれか' },
+                    { step: 4, text: '適合性評価が必要(附属書I)または重大なリスクあり(附属書III)', answer: 'Q6A/Q6B = はい' }
+                ],
+                categories: [
+                    '附属書I-A: 機械、医療機器、玩具、リフト、PPE等の安全部品',
+                    '附属書I-B: 輸送、航空分野',
+                    '生体認証・分類システム',
+                    '重要インフラ管理',
+                    '教育・職業訓練',
+                    '雇用・人事管理',
+                    '必須サービスへのアクセス（信用評価、保険等）',
+                    '法執行',
+                    '移民・国境管理',
+                    '司法・民主的プロセス'
+                ],
+                legalRef: '第6条、附属書I、附属書III'
+            },
+            {
+                id: 'gpai',
+                title: '汎用AIモデル（GPAI）',
+                badge: 'badge-gpai',
+                badgeText: 'GPAI',
+                description: '汎用AIモデルのプロバイダーには特別な義務が課されます。',
+                conditions: [
+                    { step: 1, text: 'EUとの関連がある', answer: 'Q1 = はい' },
+                    { step: 2, text: 'GPAIモデルをEU市場に投入', answer: 'Q5 = はい' }
+                ],
+                obligations: [
+                    '技術文書の作成・維持',
+                    'EU著作権法の遵守措置',
+                    '訓練データの詳細な概要の公開',
+                    'AIオフィスとの協力'
+                ],
+                systemic: {
+                    title: 'システミックリスクを持つGPAI',
+                    condition: '10^25 FLOP以上または欧州委員会による指定（Q5A = はい）',
+                    additionalObligations: [
+                        'モデル評価の実施',
+                        'システミックリスクの評価・軽減',
+                        'サイバーセキュリティの確保',
+                        '重大インシデントの報告',
+                        '適切なモデル保護'
+                    ]
+                },
+                legalRef: '第53条、第55条'
+            },
+            {
+                id: 'transparency',
+                title: '透明性義務',
+                badge: 'badge-transparency',
+                badgeText: '透明性',
+                description: '特定の機能を持つAIシステムには透明性義務が課されます。',
+                items: [
+                    {
+                        function: '人との直接的インタラクション',
+                        obligation: 'AIとの対話であることの通知',
+                        applies_to: 'プロバイダー',
+                        article: '第50条(1)'
+                    },
+                    {
+                        function: '合成コンテンツの生成',
+                        obligation: 'AI生成コンテンツのマーキング',
+                        applies_to: 'プロバイダー',
+                        article: '第50条(2)'
+                    },
+                    {
+                        function: '感情認識/生体認証分類',
+                        obligation: '対象者への通知',
+                        applies_to: 'デプロイヤー',
+                        article: '第50条(3)'
+                    },
+                    {
+                        function: 'ディープフェイク生成',
+                        obligation: 'AI生成/操作コンテンツの開示',
+                        applies_to: 'デプロイヤー',
+                        article: '第50条(4)'
+                    }
+                ],
+                legalRef: '第50条'
+            }
+        ];
+
+        // 状態管理
+        let currentQuestion = 0;
+        let answers = {};
+        let flags = {};
+        let roles = [];
+
+        // モード切り替え
+        function switchMode(mode) {
+            document.querySelectorAll('.mode-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+
+            document.querySelector(`.mode-tab[onclick*="${mode}"]`).classList.add('active');
+            document.getElementById(`${mode}-panel`).classList.add('active');
+
+            if (mode === 'reverse') {
+                renderReversePanel();
+            }
+        }
+
+        // 質問レンダリング
+        function renderQuestion() {
+            const q = questions[currentQuestion];
+            if (!q) return;
+
+            // 条件チェック
+            if (q.condition) {
+                if (q.condition.question && answers[q.condition.question] !== q.condition.value) {
+                    if (!q.condition.values || !q.condition.values.some(v => (answers[q.condition.question] || []).includes(v))) {
+                        currentQuestion++;
+                        renderQuestion();
+                        return;
+                    }
+                }
+                if (q.condition.role === 'not_provider' && roles.includes('provider')) {
+                    currentQuestion++;
+                    renderQuestion();
+                    return;
+                }
+                if (q.condition.flags) {
+                    const hasAllFlags = q.condition.flags.every(f => flags[f]);
+                    if (!hasAllFlags) {
+                        currentQuestion++;
+                        renderQuestion();
+                        return;
+                    }
+                }
+            }
+
+            updateProgress();
+
+            const container = document.getElementById('question-container');
+            const inputType = q.type === 'single' ? 'radio' : 'checkbox';
+            const savedAnswer = answers[q.id];
+
+            let optionsHtml = q.options.map((opt, i) => {
+                const checked = q.type === 'single'
+                    ? savedAnswer === opt.value ? 'checked' : ''
+                    : (savedAnswer || []).includes(opt.value) ? 'checked' : '';
+
+                return `
+                    <li class="option-item">
+                        <label class="option-label">
+                            <input type="${inputType}" name="q_${q.id}" value="${opt.value}" ${checked}>
+                            <span class="option-text">${opt.label}</span>
+                        </label>
+                    </li>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="question-card">
+                    <span class="question-number">質問 ${currentQuestion + 1} / ${questions.length}</span>
+                    <h2 class="question-text">${q.text}</h2>
+                    ${q.info ? `<div class="question-info">${q.info}</div>` : ''}
+                    <ul class="options-list">
+                        ${optionsHtml}
+                    </ul>
+                </div>
+            `;
+
+            document.getElementById('prev-btn').style.display = currentQuestion > 0 ? 'inline-block' : 'none';
+            document.getElementById('next-btn').style.display = 'inline-block';
+            document.getElementById('restart-btn').style.display = 'none';
+            document.getElementById('result-container').style.display = 'none';
+        }
+
+        // 進捗更新
+        function updateProgress() {
+            const progress = (currentQuestion / questions.length) * 100;
+            document.getElementById('progress-fill').style.width = `${progress}%`;
+        }
+
+        // 回答保存
+        function saveAnswer() {
+            const q = questions[currentQuestion];
+            const inputs = document.querySelectorAll(`input[name="q_${q.id}"]:checked`);
+
+            if (q.type === 'single') {
+                if (inputs.length > 0) {
+                    answers[q.id] = inputs[0].value;
+                    const opt = q.options.find(o => o.value === inputs[0].value);
+                    if (opt && opt.terminal) {
+                        flags[opt.flag] = true;
+                        return true;
+                    }
+                }
+            } else {
+                const values = Array.from(inputs).map(i => i.value);
+                answers[q.id] = values;
+
+                // Check for terminal options
+                for (const value of values) {
+                    const opt = q.options.find(o => o.value === value);
+                    if (opt && opt.terminal) {
+                        flags[opt.flag] = true;
+                        return true;
+                    }
+                }
+            }
+
+            // Update roles based on Q2
+            if (q.id === 'Q2') {
+                roles = answers[q.id] || [];
+                if (roles.includes('provider')) flags.provider = true;
+                if (roles.includes('deployer')) flags.deployer = true;
+            }
+
+            return false;
+        }
+
+        // 次の質問
+        function nextQuestion() {
+            const terminal = saveAnswer();
+
+            if (terminal) {
+                showResult();
+                return;
+            }
+
+            // Check for high-risk
+            if (answers['Q6A'] === 'yes' || answers['Q6B'] === 'yes') {
+                flags.high_risk = true;
+            }
+
+            // Check for GPAI
+            if (answers['Q5'] === 'yes') {
+                flags.gpai = true;
+                if (answers['Q5A'] === 'yes') {
+                    flags.gpai_systemic = true;
+                }
+            }
+
+            currentQuestion++;
+            if (currentQuestion >= questions.length) {
+                showResult();
+            } else {
+                renderQuestion();
+            }
+        }
+
+        // 前の質問
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                renderQuestion();
+            }
+        }
+
+        // 結果表示
+        function showResult() {
+            document.getElementById('question-container').innerHTML = '';
+            document.getElementById('prev-btn').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('restart-btn').style.display = 'inline-block';
+            updateProgress();
+            document.getElementById('progress-fill').style.width = '100%';
+
+            const resultContainer = document.getElementById('result-container');
+            resultContainer.style.display = 'block';
+
+            let resultClass = 'result-compliance';
+            let resultTitle = 'コンプライアンス対応が必要です';
+            let resultDesc = '';
+            let obligationsList = [];
+
+            // Determine result
+            if (flags.out_of_scope) {
+                resultClass = 'result-outofscope';
+                resultTitle = '適用範囲外';
+                resultDesc = 'あなたのAIシステムはEU AI法の適用範囲外と考えられます。ただし、状況が変化した場合は再評価が必要です。';
+            } else if (flags.excluded) {
+                resultClass = 'result-excluded';
+                resultTitle = '適用除外';
+                resultDesc = 'あなたのシステムはEU AI法の特定の除外規定に該当します。ただし、市場投入や用途変更時には再評価が必要です。';
+            } else if (flags.prohibited) {
+                resultClass = 'result-prohibited';
+                resultTitle = '禁止';
+                resultDesc = 'あなたのシステムは第5条により禁止されている機能を含んでいます。このシステムをEU市場に投入することはできません。';
+            } else {
+                // Build obligations list
+                if (roles.includes('provider') || roles.includes('deployer')) {
+                    obligationsList.push(obligations.ai_literacy);
+                }
+
+                if (flags.high_risk) {
+                    if (roles.includes('provider') || flags.becomes_provider) {
+                        obligationsList.push(obligations.provider_high_risk);
+                    }
+                    if (roles.includes('deployer')) {
+                        obligationsList.push(obligations.deployer_high_risk);
+                    }
+                }
+
+                if (flags.gpai) {
+                    obligationsList.push(obligations.gpai_base);
+                    if (flags.gpai_systemic) {
+                        obligationsList.push(obligations.gpai_systemic);
+                    }
+                }
+
+                // Transparency obligations
+                const q7answers = answers['Q7'] || [];
+                if (q7answers.includes('interact')) {
+                    obligationsList.push(obligations.transparency_natural);
+                }
+                if (q7answers.includes('synthetic')) {
+                    obligationsList.push(obligations.transparency_synthetic);
+                }
+                if (q7answers.includes('emotion')) {
+                    obligationsList.push(obligations.transparency_emotion);
+                }
+                if (q7answers.includes('deepfake') || q7answers.includes('text_public')) {
+                    obligationsList.push(obligations.transparency_deepfake);
+                }
+
+                // Fundamental rights assessment
+                if (flags.high_risk && roles.includes('deployer') && answers['Q9'] === 'yes') {
+                    obligationsList.push(obligations.fundamental_rights);
+                }
+
+                // Modifications lead to becoming provider
+                const q8answers = answers['Q8'] || [];
+                if (q8answers.length > 0 && !q8answers.includes('none')) {
+                    flags.becomes_provider = true;
+                    obligationsList.push(obligations.handover);
+                }
+
+                resultDesc = `以下の${obligationsList.length}つの義務が適用される可能性があります。詳細は各義務に関連するEU AI法の条文を参照してください。`;
+            }
+
+            let obligationsHtml = '';
+            if (obligationsList.length > 0) {
+                obligationsHtml = `
+                    <h4 style="margin-top: 20px; margin-bottom: 10px;">適用される義務:</h4>
+                    <ul class="obligations-list">
+                        ${obligationsList.map(ob => `
+                            <li>
+                                <strong>${ob.title}</strong> (${ob.article})<br>
+                                <span style="font-size: 0.9em; color: #555;">${ob.description}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                `;
+            }
+
+            resultContainer.innerHTML = `
+                <div class="result-card ${resultClass}">
+                    <h3 class="result-title">${resultTitle}</h3>
+                    <p>${resultDesc}</p>
+                    ${obligationsHtml}
+                    <div class="legal-ref" style="margin-top: 20px;">
+                        <strong>参考:</strong> EU AI法 (規則 (EU) 2024/1689) - 詳細については公式文書を参照してください。
+                    </div>
+                </div>
+            `;
+        }
+
+        // 再開
+        function restart() {
+            currentQuestion = 0;
+            answers = {};
+            flags = {};
+            roles = [];
+            renderQuestion();
+        }
+
+        // 逆引きパネルのレンダリング
+        function renderReversePanel() {
+            const container = document.getElementById('reverse-results');
+
+            container.innerHTML = reverseData.map(item => `
+                <div class="result-item" onclick="toggleReverseItem(this)">
+                    <div class="result-item-header">
+                        <span class="result-item-title">${item.title}</span>
+                        <span class="result-item-badge ${item.badge}">${item.badgeText}</span>
+                    </div>
+                    <div class="result-item-details">
+                        <p style="margin-bottom: 15px;">${item.description}</p>
+
+                        ${item.conditions ? `
+                            <h4 style="margin-bottom: 10px;">この結果に至る条件:</h4>
+                            <ul class="path-list">
+                                ${item.conditions.map(c => `
+                                    <li class="path-item">
+                                        <span class="path-number">${c.step}</span>
+                                        <span>${c.text}</span>
+                                        <span class="path-arrow">→</span>
+                                        <strong>${c.answer}</strong>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        ` : ''}
+
+                        ${item.functions ? `
+                            <h4 style="margin-top: 15px; margin-bottom: 10px;">対象となる機能:</h4>
+                            <ul style="padding-left: 20px;">
+                                ${item.functions.map(f => `<li style="margin-bottom: 5px;">${f}</li>`).join('')}
+                            </ul>
+                        ` : ''}
+
+                        ${item.categories ? `
+                            <h4 style="margin-top: 15px; margin-bottom: 10px;">対象カテゴリ:</h4>
+                            <ul style="padding-left: 20px;">
+                                ${item.categories.map(c => `<li style="margin-bottom: 5px;">${c}</li>`).join('')}
+                            </ul>
+                        ` : ''}
+
+                        ${item.obligations ? `
+                            <h4 style="margin-top: 15px; margin-bottom: 10px;">課される義務:</h4>
+                            <ul style="padding-left: 20px;">
+                                ${item.obligations.map(o => `<li style="margin-bottom: 5px;">${o}</li>`).join('')}
+                            </ul>
+                        ` : ''}
+
+                        ${item.systemic ? `
+                            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                                <h4 style="margin-bottom: 10px;">${item.systemic.title}</h4>
+                                <p><strong>追加条件:</strong> ${item.systemic.condition}</p>
+                                <h5 style="margin-top: 10px; margin-bottom: 5px;">追加義務:</h5>
+                                <ul style="padding-left: 20px;">
+                                    ${item.systemic.additionalObligations.map(o => `<li style="margin-bottom: 3px;">${o}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+
+                        ${item.items ? `
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                                <thead>
+                                    <tr style="background: #f0f0f0;">
+                                        <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">機能</th>
+                                        <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">義務</th>
+                                        <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">適用対象</th>
+                                        <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">条文</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${item.items.map(i => `
+                                        <tr>
+                                            <td style="padding: 10px; border: 1px solid #ddd;">${i.function}</td>
+                                            <td style="padding: 10px; border: 1px solid #ddd;">${i.obligation}</td>
+                                            <td style="padding: 10px; border: 1px solid #ddd;">${i.applies_to}</td>
+                                            <td style="padding: 10px; border: 1px solid #ddd;">${i.article}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        ` : ''}
+
+                        <div class="legal-ref">
+                            <strong>関連条文:</strong> ${item.legalRef}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 逆引きアイテムのトグル
+        function toggleReverseItem(element) {
+            element.classList.toggle('expanded');
+        }
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            renderQuestion();
+        });
+    </script>
+</body>
+</html>
