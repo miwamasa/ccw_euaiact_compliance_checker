@@ -1,0 +1,485 @@
+{
+  "summary": {
+    "total_questions": 33,
+    "qais_questions": 27,
+    "qgpai_questions": 5,
+    "other_questions": 1,
+    "end_states": 20,
+    "total_paths_enumerated": 7762
+  },
+  "path_analysis": {
+    "shortest_path": 2,
+    "longest_path": 12,
+    "average_path": 8.597784076269003,
+    "median_path": 8
+  },
+  "early_terminations": [
+    {
+      "question": "QAIS 5",
+      "probability": 0.6153846153846154,
+      "avg_depth": 7.712912087912088
+    },
+    {
+      "question": "QAIS 7.1",
+      "probability": 1.0,
+      "avg_depth": 11.857142857142858
+    },
+    {
+      "question": "QGPAI 3",
+      "probability": 0.3888888888888889,
+      "avg_depth": 4.0
+    },
+    {
+      "question": "QGPAI 3.1",
+      "probability": 0.7142857142857143,
+      "avg_depth": 5.0
+    },
+    {
+      "question": "QGPAI 7",
+      "probability": 1.0,
+      "avg_depth": 5.333333333333333
+    }
+  ],
+  "top_information_gain": [
+    {
+      "question": "QAIS 6.3",
+      "ig": 4.6509,
+      "paths": 392,
+      "terminal_prob": 0.0
+    },
+    {
+      "question": "QGPAI 3.1",
+      "ig": 4.6497,
+      "paths": 7,
+      "terminal_prob": 0.714
+    },
+    {
+      "question": "QGPAI 7",
+      "ig": 4.6496,
+      "paths": 6,
+      "terminal_prob": 1.0
+    },
+    {
+      "question": "QGPAI 3",
+      "ig": 4.6469,
+      "paths": 18,
+      "terminal_prob": 0.389
+    },
+    {
+      "question": "QGPAI 2",
+      "ig": 4.6455,
+      "paths": 18,
+      "terminal_prob": 0.0
+    },
+    {
+      "question": "QGPAI 1",
+      "ig": 4.6432,
+      "paths": 19,
+      "terminal_prob": 0.053
+    },
+    {
+      "question": "QAIS 2.2",
+      "ig": 4.3986,
+      "paths": 1029,
+      "terminal_prob": 0.007
+    },
+    {
+      "question": "QAIS 7.1",
+      "ig": 4.1793,
+      "paths": 1848,
+      "terminal_prob": 1.0
+    },
+    {
+      "question": "QAIS 6.1",
+      "ig": 3.7676,
+      "paths": 2240,
+      "terminal_prob": 0.0
+    },
+    {
+      "question": "QAIS 6.2",
+      "ig": 3.7676,
+      "paths": 2240,
+      "terminal_prob": 0.175
+    }
+  ],
+  "optimizations": [
+    {
+      "type": "consolidation_candidate",
+      "questions": [
+        "Q1",
+        "QAIS 2.2",
+        "QAIS 3",
+        "QAIS 4",
+        "QAIS 5"
+      ],
+      "description": "10 questions with similar routing complexity"
+    },
+    {
+      "type": "consolidation_candidate",
+      "questions": [
+        "QAIS 1.1",
+        "QAIS 1",
+        "QAIS 2.1",
+        "QAIS 2",
+        "QAIS 6.1"
+      ],
+      "description": "21 questions with similar routing complexity"
+    },
+    {
+      "type": "consolidation_candidate",
+      "questions": [
+        "QAIS 8",
+        "QGPAI 2"
+      ],
+      "description": "2 questions with similar routing complexity"
+    },
+    {
+      "type": "early_termination",
+      "questions": [
+        "QAIS 5",
+        "QAIS 7.1",
+        "QGPAI 3.1",
+        "QGPAI 7"
+      ],
+      "description": "Questions that often lead to END - good candidates for prioritization"
+    },
+    {
+      "type": "low_value",
+      "questions": [
+        "Q1",
+        "QAIS 1"
+      ],
+      "description": "Questions with low information gain - consider merging"
+    },
+    {
+      "type": "reorder",
+      "questions": [
+        "QAIS 4",
+        "QAIS 5",
+        "QAIS 6.1",
+        "QAIS 6.2",
+        "QAIS 6.3",
+        "QAIS 6",
+        "QAIS 7.1",
+        "QGPAI 7"
+      ],
+      "description": "High IG questions appearing late - consider moving earlier"
+    }
+  ],
+  "question_details": {
+    "Q1": {
+      "paths_through": 7762,
+      "avg_depth": 1.0,
+      "terminal_probability": 0.0,
+      "information_gain": 0.0248,
+      "condition_types": [
+        "answer_is"
+      ]
+    },
+    "QAIS 1.1": {
+      "paths_through": 6636,
+      "avg_depth": 3.0,
+      "terminal_probability": 0.0,
+      "information_gain": 0.6944,
+      "condition_types": [
+        "is_this_exact_match_selected"
+      ]
+    },
+    "QAIS 1": {
+      "paths_through": 7743,
+      "avg_depth": 2.0,
+      "terminal_probability": 0.0,
+      "information_gain": 0.0349,
+      "condition_types": [
+        "answer_is"
+      ]
+    },
+    "QAIS 2.1": {
+      "paths_through": 5628,
+      "avg_depth": 4.86,
+      "terminal_probability": 0.0,
+      "information_gain": 2.2282,
+      "condition_types": [
+        "flag_equals",
+        "if_any_answer_in",
+        "answer_is"
+      ]
+    },
+    "QAIS 2.2": {
+      "paths_through": 1029,
+      "avg_depth": 4.86,
+      "terminal_probability": 0.007,
+      "information_gain": 4.3986,
+      "condition_types": [
+        "if_any_answer_in",
+        "answer_is"
+      ]
+    },
+    "QAIS 2": {
+      "paths_through": 7742,
+      "avg_depth": 3.86,
+      "terminal_probability": 0.001,
+      "information_gain": 2.4332,
+      "condition_types": [
+        "answer_is"
+      ]
+    },
+    "QAIS 3": {
+      "paths_through": 7728,
+      "avg_depth": 5.72,
+      "terminal_probability": 0.014,
+      "information_gain": 0.1646,
+      "condition_types": [
+        "if_any_answer_in",
+        "answer_is"
+      ]
+    },
+    "QAIS 4": {
+      "paths_through": 7616,
+      "avg_depth": 6.72,
+      "terminal_probability": 0.235,
+      "information_gain": 0.98,
+      "condition_types": [
+        "if_any_answer_in",
+        "answer_is"
+      ]
+    },
+    "QAIS 5": {
+      "paths_through": 5824,
+      "avg_depth": 7.71,
+      "terminal_probability": 0.615,
+      "information_gain": 2.39,
+      "condition_types": [
+        "if_any_answer_in",
+        "answer_is"
+      ]
+    },
+    "QAIS 6.1": {
+      "paths_through": 2240,
+      "avg_depth": 9.68,
+      "terminal_probability": 0.0,
+      "information_gain": 3.7676,
+      "condition_types": [
+        "flag_equals",
+        "if_any_answer_in",
+        "answer_is"
+      ]
+    },
+    "QAIS 6.2": {
+      "paths_through": 2240,
+      "avg_depth": 10.86,
+      "terminal_probability": 0.175,
+      "information_gain": 3.7676,
+      "condition_types": [
+        "flag_equals",
+        "answer_is"
+      ]
+    },
+    "QAIS 6.3": {
+      "paths_through": 392,
+      "avg_depth": 9.86,
+      "terminal_probability": 0.0,
+      "information_gain": 4.6509,
+      "condition_types": [
+        "if_any_answer_in",
+        "answer_is"
+      ]
+    },
+    "QAIS 6.4.1": {
+      "paths_through": 0,
+      "avg_depth": 0.0,
+      "terminal_probability": 0.0,
+      "information_gain": 0.0,
+      "condition_types": [
+        "flag_equals",
+        "if_any_answer_in"
+      ]
+    },
+    "QAIS 6.4.2": {
+      "paths_through": 0,
+      "avg_depth": 0.0,
+      "terminal_probability": 0.0,
+      "information_gain": 0.0,
+      "condition_types": [
+        "flag_equals",
+        "if_any_answer_in"
+      ]
+    },
+    "QAIS 6.4.3": {
+      "paths_through": 0,
+      "avg_depth": 0.0,
+      "terminal_probability": 0.0,
+      "information_gain": 0.0,
+      "condition_types": [
+        "flag_equals",
+        "if_any_answer_in"
+      ]
+    },
+    "QAIS 6.4.4": {
+      "paths_through": 0,
+      "avg_depth": 0.0,
+      "terminal_probability": 0.0,
+      "information_gain": 0.0,
+      "condition_types": [
+        "flag_equals",
+        "if_any_answer_in"
+      ]
+    },
+    "QAIS 6.4.5": {
+      "paths_through": 0,
+      "avg_depth": 0.0,
+      "terminal_probability": 0.0,
+      "information_gain": 0.0,
+      "condition_types": [
+        "flag_equals",
+        "if_any_answer_in"
+      ]
+    },
+    "QAIS 6.4.6": {
+      "paths_through": 0,
+      "avg_depth": 0.0,
+      "terminal_probability": 0.0,
+      "information_gain": 0.0,
+      "condition_types": [
+        "flag_equals",
+        "if_any_answer_in"
+      ]
+    },
+    "QAIS 6.4.7": {
+      "paths_through": 0,
+      "avg_depth": 0.0,
+      "terminal_probability": 0.0,
+      "information_gain": 0.0,
+      "condition_types": [
+        "flag_equals",
+        "if_any_answer_in"
+      ]
+    },
+    "QAIS 6.4": {
+      "paths_through": 0,
+      "avg_depth": 0.0,
+      "terminal_probability": 0.0,
+      "information_gain": 0.0,
+      "condition_types": [
+        "flag_equals",
+        "if_none_selected_in",
+        "answer_is"
+      ]
+    },
+    "QAIS 6.5": {
+      "paths_through": 0,
+      "avg_depth": 0.0,
+      "terminal_probability": 0.0,
+      "information_gain": 0.0,
+      "condition_types": [
+        "flag_equals"
+      ]
+    },
+    "QAIS 6": {
+      "paths_through": 2240,
+      "avg_depth": 8.68,
+      "terminal_probability": 0.0,
+      "information_gain": 3.7676,
+      "condition_types": [
+        "answer_is"
+      ]
+    },
+    "QAIS_6_hub_evaluation_risk": {
+      "paths_through": 0,
+      "avg_depth": 0.0,
+      "terminal_probability": 0.0,
+      "information_gain": 0.0,
+      "condition_types": [
+        "flag_equals"
+      ]
+    },
+    "QAIS_6_hub_highrisk_path": {
+      "paths_through": 0,
+      "avg_depth": 0.0,
+      "terminal_probability": 0.0,
+      "information_gain": 0.0,
+      "condition_types": [
+        "flag_equals"
+      ]
+    },
+    "QAIS_6_hub_nohighrisk_path": {
+      "paths_through": 0,
+      "avg_depth": 0.0,
+      "terminal_probability": 0.0,
+      "information_gain": 0.0,
+      "condition_types": [
+        "flag_equals"
+      ]
+    },
+    "QAIS 7.1": {
+      "paths_through": 1848,
+      "avg_depth": 11.86,
+      "terminal_probability": 1.0,
+      "information_gain": 4.1793,
+      "condition_types": [
+        "flag_equals"
+      ]
+    },
+    "QAIS 7.2": {
+      "paths_through": 0,
+      "avg_depth": 0.0,
+      "terminal_probability": 0.0,
+      "information_gain": 0.0,
+      "condition_types": [
+        "flag_equals"
+      ]
+    },
+    "QAIS 8": {
+      "paths_through": 0,
+      "avg_depth": 0.0,
+      "terminal_probability": 0.0,
+      "information_gain": 0.0,
+      "condition_types": []
+    },
+    "QGPAI 1": {
+      "paths_through": 19,
+      "avg_depth": 2.0,
+      "terminal_probability": 0.053,
+      "information_gain": 4.6432,
+      "condition_types": [
+        "answer_is"
+      ]
+    },
+    "QGPAI 2": {
+      "paths_through": 18,
+      "avg_depth": 3.0,
+      "terminal_probability": 0.0,
+      "information_gain": 4.6455,
+      "condition_types": []
+    },
+    "QGPAI 3": {
+      "paths_through": 18,
+      "avg_depth": 4.0,
+      "terminal_probability": 0.389,
+      "information_gain": 4.6469,
+      "condition_types": [
+        "flag_equals",
+        "answer_is"
+      ]
+    },
+    "QGPAI 3.1": {
+      "paths_through": 7,
+      "avg_depth": 5.0,
+      "terminal_probability": 0.714,
+      "information_gain": 4.6497,
+      "condition_types": [
+        "flag_equals",
+        "answer_is"
+      ]
+    },
+    "QGPAI 7": {
+      "paths_through": 6,
+      "avg_depth": 5.33,
+      "terminal_probability": 1.0,
+      "information_gain": 4.6496,
+      "condition_types": [
+        "answer_is"
+      ]
+    }
+  }
+}

@@ -42,6 +42,22 @@ questionnaire:
         that may exhibit adaptiveness after deployment, and that, for explicit or implicit objectives, infers, from the input
         it receives how to generate outputs such as predictions, content, recommendations, or decisions that can influence
         physical or virtual environments.
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: false
+      - flag_name: flag_obligation_transparency_provider
+        value: false
+      - flag_name: flag_obligation_transparency_deployer
+        value: false
+      - flag_name: critical_infrastructure
+        value: false
+    routing:
+    - conditions:
+      - answer_is: 0
+      go_to: QGPAI 1
+    - conditions:
+      - answer_is: 1
+      go_to: QAIS 1
   QAIS 1.1:
     id: QAIS 1.1
     question: Does your AI system have these characteristics?
@@ -223,6 +239,33 @@ questionnaire:
         \ forecasting  systems that would require more sophisticated models. For detailed information, please refer to the\
         \ [guidelines on the definition of an AI system, Section 5.2, paragraphs 40-51.](https://ai-act-service-desk.ec.europa.eu/sites/default/files/2025-12/guide-definition_en-1.pdf#nameddest=para_40)\n\
         \n"
+    routing:
+    - conditions:
+      - is_this_exact_match_selected:
+        - 0
+        - 1
+        - 3
+        - 4
+      go_to: QAIS 2
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_output
+        value: true
+    - conditions:
+      - is_this_exact_match_selected:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+      go_to: QAIS 2
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_output
+        value: true
+    - conditions: []
+      go_to: END
+      set_flags:
+      - flag_name: flag_ai_system_outsidescope
+        value: true
   QAIS 1:
     id: QAIS 1
     question: Is your system an AI system within the meaning of the AI Act?
@@ -238,12 +281,28 @@ questionnaire:
     - value: '0'
       label: 'Yes'
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_output
+        value: true
     - value: '1'
       label: 'No'
       help: ''
+      set_flags:
+      - flag_name: flag_ai_system_outsidescope
+        value: true
     - value: '2'
       label: Uncertain
       help: ''
+    routing:
+    - conditions:
+      - answer_is: 0
+      go_to: QAIS 2
+    - conditions:
+      - answer_is: 1
+      go_to: END
+    - conditions:
+      - answer_is: 2
+      go_to: QAIS 1.1
   QAIS 2.1:
     id: QAIS 2.1
     question: As a downstream distributor, importer, deployer, or third-party, have you made any of the following modifications
@@ -255,6 +314,11 @@ questionnaire:
     - value: '0'
       label: You put your name or trademark on the AI system
       help: ''
+      set_flags:
+      - flag_name: flag_ai_system_role
+        value: provider
+      - flag_name: flag_role_distriimportdeployer_becomeprovider_result
+        value: true
     - value: '1'
       label: You made a substantial modification to the AI system that has already been placed on the market or put into service
       help: "Under the AI Act, substantial modification is defined as 'a change to an AI system after its placing on the market\
@@ -268,12 +332,47 @@ questionnaire:
         \ continue to 'learn' after being placed on the market or put into service, namely automatically adapting how functions\
         \ are carried out, should not constitute a substantial modification, provided that those changes have been pre-determined\
         \ by the provider and assessed at the moment of the conformity assessment' (Recital 128)."
+      set_flags:
+      - flag_name: flag_ai_system_role
+        value: provider
+      - flag_name: flag_role_distriimportdeployer_becomeprovider_result
+        value: true
     - value: '2'
       label: You modified the intended purpose of the AI system in such a way that the AI system becomes a high-risk AI system
       help: ''
+      set_flags:
+      - flag_name: flag_ai_system_role
+        value: provider
+      - flag_name: flag_role_distriimportdeployer_becomeprovider_result
+        value: true
     - value: '3'
       label: None of the above
       help: ''
+    routing:
+    - conditions:
+      - if_any_answer_in:
+        - 0
+        - 1
+        - 2
+      go_to: QAIS 3
+    - conditions:
+      - flag_equals:
+          flag_name: flag_ai_system_role
+          value: deployer
+      go_to: QAIS 3
+    - conditions:
+      - flag_equals:
+          flag_name: flag_ai_system_role
+          value: importer
+      go_to: QAIS 3
+    - conditions:
+      - flag_equals:
+          flag_name: flag_ai_system_role
+          value: distributor
+      go_to: QAIS 3
+    - conditions:
+      - answer_is: 3
+      go_to: QAIS 2.2
   QAIS 2.2:
     id: QAIS 2.2
     question: 'Does your product integrate an AI system or is itself an AI system, and do you currently fall under any of
@@ -285,12 +384,38 @@ questionnaire:
     - value: '0'
       label: The AI system is placed on the market together with the product under your name or trademark?
       help: ''
+      set_flags:
+      - flag_name: flag_ai_system_role
+        value: provider
+      - flag_name: flag_role_manutoprovider_output
+        value: true
     - value: '1'
       label: The AI system is put into service under your name or trademark after the product has been placed on the market?
       help: ''
+      set_flags:
+      - flag_name: flag_ai_system_role
+        value: provider
+      - flag_name: flag_role_manutoprovider_output
+        value: true
     - value: '2'
       label: None of the above
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_output
+        value: false
+      - flag_name: flag_outofscope
+        value: true
+      - flag_name: flag_ai_system_obligations_productmanufacturer
+        value: true
+    routing:
+    - conditions:
+      - if_any_answer_in:
+        - 0
+        - 1
+      go_to: QAIS 3
+    - conditions:
+      - answer_is: 2
+      go_to: END
   QAIS 2:
     id: QAIS 2
     question: 'Are you or your organisation responsible for any of the following roles within the EU? Note: If you have multiple
@@ -306,32 +431,89 @@ questionnaire:
         or a general-purpose AI model or that has an AI system or a general-purpose AI model developed and places it on the
         market or puts the AI system into service under its own name or trademark, whether for payment or free of charge (Article
         3 (3)).
+      set_flags:
+      - flag_name: flag_ai_system_role
+        value: provider
+      - flag_name: flag_ai_initial_system_role
+        value: provider
     - value: '1'
       label: Deployer
       help: A 'deployer' means a natural or legal person, public authority, agency or other body using an AI system under
         its authority except where the AI system is used in the course of a personal non-professional activity (Article 3
         (4)).
+      set_flags:
+      - flag_name: flag_ai_system_role
+        value: deployer
+      - flag_name: flag_ai_initial_system_role
+        value: deployer
     - value: '2'
       label: Importer
       help: An 'importer' means a natural or legal person located or established in the Union that places on the market an
         AI system that bears the name or trademark of a natural or legal person established in a third country (Article 3
         (6)).
+      set_flags:
+      - flag_name: flag_ai_system_role
+        value: importer
+      - flag_name: flag_ai_initial_system_role
+        value: importer
     - value: '3'
       label: Distributor
       help: A 'distributor' means a natural or legal person in the supply chain, other than the provider or the importer,
         that makes an AI system available on the Union market (Article 3 (7)).
+      set_flags:
+      - flag_name: flag_ai_system_role
+        value: distributor
+      - flag_name: flag_ai_initial_system_role
+        value: distributor
     - value: '4'
       label: Authorised representative
       help: An 'authorised representative' means a natural or legal person located or established in the Union who has received
         and accepted a written mandate from a provider of an AI system or a general-purpose AI model to, respectively, perform
         and carry out on its behalf the obligations and procedures established by the AI Act (Article 3 (5)).
+      set_flags:
+      - flag_name: flag_ai_system_role
+        value: authorisedrepre
+      - flag_name: flag_ai_initial_system_role
+        value: authorisedrepre
     - value: '5'
       label: Product manufacturer
       help: A 'product manufacturer' is an operator that places an AI system on the market or puts it into service alongside
         its product, under their own name or trademark (Article 2 (1) e)).
+      set_flags:
+      - flag_name: flag_ai_system_role
+        value: productmanufacturer
+      - flag_name: flag_ai_initial_system_role
+        value: productmanufacturer
     - value: '6'
       label: You are a natural person using an AI system for purely personal non-professional activity
       help: ''
+      set_flags:
+      - flag_name: flag_aisystem_role_and_obligation_outofscope
+        value: true
+      - flag_name: flag_risklevel_aisystem_output
+        value: false
+    routing:
+    - conditions:
+      - answer_is: 0
+      go_to: QAIS 3
+    - conditions:
+      - answer_is: 1
+      go_to: QAIS 2.1
+    - conditions:
+      - answer_is: 2
+      go_to: QAIS 2.1
+    - conditions:
+      - answer_is: 3
+      go_to: QAIS 2.1
+    - conditions:
+      - answer_is: 4
+      go_to: QAIS 3
+    - conditions:
+      - answer_is: 5
+      go_to: QAIS 2.2
+    - conditions:
+      - answer_is: 6
+      go_to: END
   QAIS 3:
     id: QAIS 3
     question: Do you meet any of the following statement?
@@ -355,6 +537,22 @@ questionnaire:
     - value: '4'
       label: None of the above
       help: ''
+      set_flags:
+      - flag_name: flag_outofscope
+        value: true
+      - flag_name: flag_risklevel_aisystem_output
+        value: false
+    routing:
+    - conditions:
+      - if_any_answer_in:
+        - 0
+        - 1
+        - 2
+        - 3
+      go_to: QAIS 4
+    - conditions:
+      - answer_is: 4
+      go_to: END
   QAIS 4:
     id: QAIS 4
     question: Does your AI system meet any of the following descriptions?
@@ -365,21 +563,57 @@ questionnaire:
     - value: '0'
       label: The AI system is exclusively developed and used for military, defence or national security purposes
       help: ''
+      set_flags:
+      - flag_name: flag_aisystem_obligations_exclusions_output
+        value: true
+      - flag_name: flag_risklevel_aisystem_output
+        value: false
     - value: '1'
       label: The AI system is used by public authorities in third countries or international organisations in the framework
         of international cooperation for law enforcement and judicial cooperation
       help: ''
+      set_flags:
+      - flag_name: flag_aisystem_obligations_exclusions_output
+        value: true
+      - flag_name: flag_risklevel_aisystem_output
+        value: false
     - value: '2'
       label: The AI system is specifically developed and put into service for the sole purpose of scientific research and
         development
       help: Testing in real world conditions shall not be covered by that exclusion.
+      set_flags:
+      - flag_name: flag_aisystem_obligations_exclusions_output
+        value: true
+      - flag_name: flag_risklevel_aisystem_output
+        value: false
     - value: '3'
       label: The AI system is used in research, testing or development activity prior to being placed on the market or put
         into service
       help: ''
+      set_flags:
+      - flag_name: flag_aisystem_obligations_exclusions_output
+        value: true
+      - flag_name: flag_risklevel_aisystem_output
+        value: false
     - value: '4'
       label: None of the above
       help: ''
+    routing:
+    - conditions:
+      - if_any_answer_in:
+        - 0
+        - 1
+        - 2
+        - 3
+      go_to: END
+    - conditions:
+      - answer_is: 4
+      go_to: QAIS 5
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: false
+      - flag_name: is_ai_highrisk_permanent
+        value: false
   QAIS 5:
     id: QAIS 5
     question: Does your AI system fall under one of these AI practices?
@@ -501,6 +735,9 @@ questionnaire:
         \ \nFor detailed information about harmful manipulation and deception, please refer to the [guidelines on prohibited\
         \ AI practices, section 3, paragraphs 58-97.](https://ai-act-service-desk.ec.europa.eu/sites/default/files/2025-12/guide-prohibited_en.pdf#nameddest=para_58)\n\
         \n"
+      set_flags:
+      - flag_name: flag_obligations_prohibitedsystems_result_output
+        value: true
     - value: '1'
       label: AI system exploits of vulnerabilities due to age, disability or a specific socioeconomic situation to materially
         distort a person's behaviour, thereby likely causing significant harm
@@ -558,6 +795,9 @@ questionnaire:
         \ on the prohibited AI practices, section 3.3.3, paragraphs 114-121 and 134.](https://ai-act-service-desk.ec.europa.eu/sites/default/files/2025-12/guide-prohibited_en.pdf#nameddest=para_114)\n\
         For details about the interplay between the prohibitions in Article 5(1)a) and (b) AI Act, please refer to the [guidelines\
         \ on prohibited practices, Section 3.4, paragraphs 122-125.](https://ai-act-service-desk.ec.europa.eu/sites/default/files/2025-12/guide-prohibited_en.pdf#nameddest=para_122)\n"
+      set_flags:
+      - flag_name: flag_obligations_prohibitedsystems_result_output
+        value: true
     - value: '2'
       label: AI system carries out social scoring leading to detrimental or unfavorable treatment of certain natural persons
         or groups of persons
@@ -626,6 +866,9 @@ questionnaire:
         \ ‘probabilistic value’ and prognosis should also be distinguished from individual ratings by users which assess the\
         \ quality of a service (such as a driver in an online car-sharing platform or a host in an online platform for accommodation).\n\
         For detailed information, please refer to the [guidelines on prohibited AI practices, Section 4.3, paragraphs 173-177.](https://ai-act-service-desk.ec.europa.eu/sites/default/files/2025-12/guide-prohibited_en.pdf#nameddest=para_173)\n"
+      set_flags:
+      - flag_name: flag_obligations_prohibitedsystems_result_output
+        value: true
     - value: '3'
       label: AI system does individual criminal offence risk assessment and prediction for natural persons solely on the profiling
         or assessment of personality traits or characteristics
@@ -677,6 +920,9 @@ questionnaire:
         \ 5.3.3, paragraphs 215-216](https://ai-act-service-desk.ec.europa.eu/sites/default/files/2025-12/guide-prohibited_en.pdf#nameddest=para_215)).\n\
         d)\tAI systems used for individual predictions of administrative offences (please refer to [Section 5.3.4, paragraphs\
         \ 217-218](https://ai-act-service-desk.ec.europa.eu/sites/default/files/2025-12/guide-prohibited_en.pdf#nameddest=para_217)).\n"
+      set_flags:
+      - flag_name: flag_obligations_prohibitedsystems_result_output
+        value: true
     - value: '4'
       label: Untargeted AI-enabled scraping of facial images from the internet or CCTV to create or expand databases
       help: "Following the European Commission’s guidelines on prohibited AI practices: \n1)\tFacial recognition databases\n\
@@ -702,6 +948,9 @@ questionnaire:
         \ persons. Such AI systems could fall under the transparency requirements of Article 50 AI Act.\nFor detailed information\
         \ about the conditions relating to Article 5(1)(e), please refer to the [guidelines on prohibited AI practices, Section\
         \ 6, paragraphs 222-238.](https://ai-act-service-desk.ec.europa.eu/sites/default/files/2025-12/guide-prohibited_en.pdf#nameddest=para_222)\n"
+      set_flags:
+      - flag_name: flag_obligations_prohibitedsystems_result_output
+        value: true
     - value: '5'
       label: AI system deploys emotion recognition in the areas of workplace and education institutions (except when used
         for medical and safety reasons)
@@ -759,6 +1008,9 @@ questionnaire:
         \ other domains other than in the areas of the workplace and education institutions do not fall under the prohibition\
         \ in Article 5(1)(f) AI Act.\nFor detailed information, please refer to the [guidelines on prohibited AI practices,\
         \ Section 7.4, paragraphs 265-270.](https://ai-act-service-desk.ec.europa.eu/sites/default/files/2025-12/guide-prohibited_en.pdf#nameddest=para_265)\n"
+      set_flags:
+      - flag_name: flag_obligations_prohibitedsystems_result_output
+        value: true
     - value: '6'
       label: Biometric categorisation to deduce sensitive attributes like political opinion, religious beliefs or sexual orientation
       help: "The AI Act refers to biometric categorisation system as 'an AI system for the purpose of assigning natural persons\
@@ -790,6 +1042,9 @@ questionnaire:
         \ in that provision does not apply to the labelling or filtering of lawfully acquired datasets in the area of law\
         \ enforcement.\nFor detailed information, please refer to the [guidelines on prohibited AI practices, Section 8.3,\
         \ paragraphs 284-286.](https://ai-act-service-desk.ec.europa.eu/sites/default/files/2025-12/guide-prohibited_en.pdf#nameddest=para_284)\n"
+      set_flags:
+      - flag_name: flag_obligations_prohibitedsystems_result_output
+        value: true
     - value: '7'
       label: Use of remote biometric identification in 'real-time' in publicly accessible space for the purpose of law enforcement,
         unless explicitly authorised by national law based on the AI Act
@@ -899,9 +1154,40 @@ questionnaire:
         \ fall within the category of high-risk AI systems as defined by Article 6 and listed in point 1(a) of Annex III AI\
         \ Act provided they fall within the scope of the AI Act.\nFor detailed information, please refer to the [guidelines\
         \ on prohibited AI practices, Section 10.7, paragraphs 426-429.](https://ai-act-service-desk.ec.europa.eu/sites/default/files/2025-12/guide-prohibited_en.pdf#nameddest=para_426)\n"
+      set_flags:
+      - flag_name: flag_obligations_prohibitedsystems_result_output
+        value: true
     - value: '8'
       label: None of the above
       help: ''
+      set_flags:
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: provider
+        flag_name: flag_obligations_provideranddeployer_ailiteracy
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_obligations_provideranddeployer_ailiteracy
+        value: true
+    routing:
+    - conditions:
+      - if_any_answer_in:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+      go_to: END
+    - conditions:
+      - answer_is: 8
+      go_to: QAIS 6
   QAIS 6.1:
     id: QAIS 6.1
     question: Is it regulated under one of the sectors listed below?
@@ -958,6 +1244,34 @@ questionnaire:
     - value: '12'
       label: None of the above
       help: ''
+    routing:
+    - conditions:
+      - if_any_answer_in:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        - 11
+      set_flags:
+      - flag_name: qais_6_1_annex1_sectiona_responded_yes_to_at_least_one_section
+        value: true
+      go_to: QAIS 6.2
+    - conditions:
+      - answer_is: 12
+      - flag_equals:
+          flag_name: flag_ai_initial_system_role
+          value: provider
+      go_to: QAIS 6.3
+    - conditions:
+      - answer_is: 12
+      go_to: QAIS 6.2
   QAIS 6.2:
     id: QAIS 6.2
     question: Is your product, or the product in which your AI system is intended to be used as a safety component is required
@@ -970,9 +1284,78 @@ questionnaire:
     - value: '0'
       label: 'Yes'
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - flag_name: is_ai_highrisk_permanent
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: provider
+        flag_name: flag_obligations_provider_results_high_risk
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: authorisedrepre
+        flag_name: flag_obligations_authorisdrepre_results_high_risk
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: importer
+        flag_name: flag_obligations_importer_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: distributor
+        flag_name: flag_obligations_distributor_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_obligations_deployer_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_rooting_yes_at_QAIS_6_3
+            value: true
+        flag_name: flag_obligations_provider_results_high_risk
+        value: false
     - value: '1'
       label: 'No'
       help: ''
+    routing:
+    - conditions:
+      - answer_is: 0
+      - flag_equals:
+          flag_name: flag_rooting_yes_at_QAIS_6_3
+          value: true
+      set_flags:
+      - flag_name: flag_obligations_provider_section_b_results_high_risk
+        value: true
+      go_to: END
+    - conditions:
+      - flag_equals:
+          flag_name: qais_6_1_annex1_sectiona_responded_yes_to_at_least_one_section
+          value: true
+      go_to: QAIS 6.4
+    - conditions:
+      - answer_is: 0
+      - flag_equals:
+          flag_name: flag_ai_system_role
+          value: provider
+      set_flags:
+      - flag_name: flag_obligations_provider_section_b_results_high_risk
+        value: true
+      - flag_name: flag_obligations_provider_results_high_risk
+        value: false
+      go_to: QAIS 7.1
+    - conditions: []
+      go_to: QAIS 6.4
   QAIS 6.3:
     id: QAIS 6.3
     question: Is your AI system, or the product in which your AI system is intended to be used as a safety component, subject
@@ -1015,6 +1398,23 @@ questionnaire:
     - value: '7'
       label: None of the above
       help: ''
+    routing:
+    - conditions:
+      - if_any_answer_in:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+      go_to: QAIS 6.2
+      set_flags:
+      - flag_name: flag_rooting_yes_at_QAIS_6_3
+        value: true
+    - conditions:
+      - answer_is: 7
+      go_to: QAIS 6.4
   QAIS 6.4.1:
     id: QAIS 6.4.1
     question: 'Is your AI system intended to be used for any of the following use-cases? Note: the use of your AI system must
@@ -1026,16 +1426,103 @@ questionnaire:
     - value: '0'
       label: Remote biometric identification systems
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '1'
       label: AI systems intended to be used for biometric categorisation, according to sensitive or protected attributes or
         characteristics based on the inference of those attributes or characteristics
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '2'
       label: AI systems intended to be used for emotion recognition
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '3'
       label: None of the above
       help: ''
+    routing:
+    - conditions:
+      - if_any_answer_in:
+        - 0
+        - 1
+        - 2
+      - flag_equals:
+          flag_name: is_ai_highrisk_permanent
+          value: false
+      go_to: QAIS 6.5
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_2
+          value: true
+      go_to: QAIS 6.4.2
+      set_flags:
+      - flag_name: flag_should_ask_6_4_2
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_3
+          value: true
+      go_to: QAIS 6.4.3
+      set_flags:
+      - flag_name: flag_should_ask_6_4_3
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_4
+          value: true
+      go_to: QAIS 6.4.4
+      set_flags:
+      - flag_name: flag_should_ask_6_4_4
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_5
+          value: true
+      go_to: QAIS 6.4.5
+      set_flags:
+      - flag_name: flag_should_ask_6_4_5
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_6
+          value: true
+      go_to: QAIS 6.4.6
+      set_flags:
+      - flag_name: flag_should_ask_6_4_6
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_7
+          value: true
+      go_to: QAIS 6.4.7
+      set_flags:
+      - flag_name: flag_should_ask_6_4_7
+        value: false
+    - conditions: []
+      go_to: QAIS_6_hub_evaluation_risk
   QAIS 6.4.2:
     id: QAIS 6.4.2
     question: Is your AI system intended to be used for any of the following use-cases?
@@ -1047,22 +1534,119 @@ questionnaire:
       label: AI systems intended to be used to determine access or admission or to assign natural persons to educational and
         vocational training institutions at all levels
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '1'
       label: AI systems intended to be used to evaluate learning outcomes, including when those outcomes are used to steer
         the learning process of natural persons in educational and vocational training institutions at all levels
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '2'
       label: AI systems intended to be used for the purpose of assessing the appropriate level of education that an individual
         will receive or will be able to access, in the context of or within educational and vocational training institutions
         at all levels
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '3'
       label: AI systems intended to be used for monitoring and detecting prohibited behaviour of students during tests in
         the context of or within educational and vocational training institutions at all levels
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '4'
       label: None of the above
       help: ''
+    routing:
+    - conditions:
+      - if_any_answer_in:
+        - 0
+        - 1
+        - 2
+        - 3
+      - flag_equals:
+          flag_name: is_ai_highrisk_permanent
+          value: false
+      go_to: QAIS 6.5
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_2
+          value: true
+      go_to: QAIS 6.4.2
+      set_flags:
+      - flag_name: flag_should_ask_6_4_2
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_3
+          value: true
+      go_to: QAIS 6.4.3
+      set_flags:
+      - flag_name: flag_should_ask_6_4_3
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_4
+          value: true
+      go_to: QAIS 6.4.4
+      set_flags:
+      - flag_name: flag_should_ask_6_4_4
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_5
+          value: true
+      go_to: QAIS 6.4.5
+      set_flags:
+      - flag_name: flag_should_ask_6_4_5
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_6
+          value: true
+      go_to: QAIS 6.4.6
+      set_flags:
+      - flag_name: flag_should_ask_6_4_6
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_7
+          value: true
+      go_to: QAIS 6.4.7
+      set_flags:
+      - flag_name: flag_should_ask_6_4_7
+        value: false
+    - conditions: []
+      go_to: QAIS_6_hub_evaluation_risk
   QAIS 6.4.3:
     id: QAIS 6.4.3
     question: Is your AI system intended to be used for any of the following use-cases?
@@ -1074,14 +1658,91 @@ questionnaire:
       label: AI systems intended to be used for the recruitment or selection of natural persons, in particular to place targeted
         job advertisements, to analyse and filter job applications, and to evaluate candidates
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '1'
       label: AI systems intended to be used to make decisions affecting terms of work-related relationships, the promotion
         or termination of work-related contractual relationships, to allocate tasks based on individual behaviour or personal
         traits or characteristics or to monitor and evaluate the performance and behaviour of persons in such relationships
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '2'
       label: None of the above
       help: ''
+    routing:
+    - conditions:
+      - if_any_answer_in:
+        - 0
+        - 1
+      - flag_equals:
+          flag_name: is_ai_highrisk_permanent
+          value: false
+      go_to: QAIS 6.5
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_2
+          value: true
+      go_to: QAIS 6.4.2
+      set_flags:
+      - flag_name: flag_should_ask_6_4_2
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_3
+          value: true
+      go_to: QAIS 6.4.3
+      set_flags:
+      - flag_name: flag_should_ask_6_4_3
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_4
+          value: true
+      go_to: QAIS 6.4.4
+      set_flags:
+      - flag_name: flag_should_ask_6_4_4
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_5
+          value: true
+      go_to: QAIS 6.4.5
+      set_flags:
+      - flag_name: flag_should_ask_6_4_5
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_6
+          value: true
+      go_to: QAIS 6.4.6
+      set_flags:
+      - flag_name: flag_should_ask_6_4_6
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_7
+          value: true
+      go_to: QAIS 6.4.7
+      set_flags:
+      - flag_name: flag_should_ask_6_4_7
+        value: false
+    - conditions: []
+      go_to: QAIS_6_hub_evaluation_risk
   QAIS 6.4.4:
     id: QAIS 6.4.4
     question: Is your AI system intended to be used for any of the following use-cases?
@@ -1094,22 +1755,119 @@ questionnaire:
         of natural persons for essential public assistance benefits and services, including healthcare services, as well as
         to grant, reduce, revoke, or reclaim such benefits and services
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '1'
       label: AI systems intended to be used to evaluate the creditworthiness of natural persons or establish their credit
         score, with the exception of AI systems used for the purpose of detecting financial fraud
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '2'
       label: AI systems intended to be used for risk assessment and pricing in relation to natural persons in the case of
         life and health insurance
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '3'
       label: AI systems intended to evaluate and classify emergency calls by natural persons or to be used to dispatch, or
         to establish priority in the dispatching of, emergency first response services, including by police, firefighters
         and medical aid, as well as of emergency healthcare patient triage systems
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '4'
       label: None of the above
       help: ''
+    routing:
+    - conditions:
+      - if_any_answer_in:
+        - 0
+        - 1
+        - 2
+        - 3
+      - flag_equals:
+          flag_name: is_ai_highrisk_permanent
+          value: false
+      go_to: QAIS 6.5
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_2
+          value: true
+      go_to: QAIS 6.4.2
+      set_flags:
+      - flag_name: flag_should_ask_6_4_2
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_3
+          value: true
+      go_to: QAIS 6.4.3
+      set_flags:
+      - flag_name: flag_should_ask_6_4_3
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_4
+          value: true
+      go_to: QAIS 6.4.4
+      set_flags:
+      - flag_name: flag_should_ask_6_4_4
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_5
+          value: true
+      go_to: QAIS 6.4.5
+      set_flags:
+      - flag_name: flag_should_ask_6_4_5
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_6
+          value: true
+      go_to: QAIS 6.4.6
+      set_flags:
+      - flag_name: flag_should_ask_6_4_6
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_7
+          value: true
+      go_to: QAIS 6.4.7
+      set_flags:
+      - flag_name: flag_should_ask_6_4_7
+        value: false
+    - conditions: []
+      go_to: QAIS_6_hub_evaluation_risk
   QAIS 6.4.5:
     id: QAIS 6.4.5
     question: Is your AI system intended to be used for any of the following use-cases?
@@ -1122,15 +1880,42 @@ questionnaire:
         offices or agencies in support of law enforcement authorities or on their behalf to assess the risk of a natural person
         becoming the victim of criminal offences
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '1'
       label: AI systems intended to be used by or on behalf of law enforcement authorities or by Union institutions, bodies,
         offices or agencies in support of law enforcement authorities as polygraphs or similar tools
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '2'
       label: AI systems intended to be used by or on behalf of law enforcement authorities, or by Union institutions, bodies,
         offices or agencies, in support of law enforcement authorities to evaluate the reliability of evidence in the course
         of the investigation or prosecution of criminal offences
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '3'
       label: AI systems intended to be used by law enforcement authorities or on their behalf or by Union institutions, bodies,
         offices or agencies in support of law enforcement authorities for assessing the risk of a natural person offending
@@ -1138,15 +1923,95 @@ questionnaire:
         (EU) 2016/680, or to assess personality traits and characteristics or past criminal behaviour of natural persons or
         groups
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '4'
       label: AI systems intended to be used by or on behalf of law enforcement authorities or by Union institutions, bodies,
         offices or agencies in support of law enforcement authorities for the profiling of natural persons as referred to
         in Article 3-(4) of Directive (EU) 2016/680 in the course of the detection, investigation or prosecution of criminal
         offences
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '5'
       label: None of the above
       help: ''
+    routing:
+    - conditions:
+      - if_any_answer_in:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+      - flag_equals:
+          flag_name: is_ai_highrisk_permanent
+          value: false
+      go_to: QAIS 6.5
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_2
+          value: true
+      go_to: QAIS 6.4.2
+      set_flags:
+      - flag_name: flag_should_ask_6_4_2
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_3
+          value: true
+      go_to: QAIS 6.4.3
+      set_flags:
+      - flag_name: flag_should_ask_6_4_3
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_4
+          value: true
+      go_to: QAIS 6.4.4
+      set_flags:
+      - flag_name: flag_should_ask_6_4_4
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_5
+          value: true
+      go_to: QAIS 6.4.5
+      set_flags:
+      - flag_name: flag_should_ask_6_4_5
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_6
+          value: true
+      go_to: QAIS 6.4.6
+      set_flags:
+      - flag_name: flag_should_ask_6_4_6
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_7
+          value: true
+      go_to: QAIS 6.4.7
+      set_flags:
+      - flag_name: flag_should_ask_6_4_7
+        value: false
+    - conditions: []
+      go_to: QAIS_6_hub_evaluation_risk
   QAIS 6.4.6:
     id: QAIS 6.4.6
     question: Is your AI system intended to be used for any of the following use-cases?
@@ -1158,25 +2023,122 @@ questionnaire:
       label: AI systems intended to be used by or on behalf of competent public authorities or by Union institutions, bodies,
         offices or agencies as polygraphs or similar tools
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '1'
       label: AI systems intended to be used by or on behalf of competent public authorities or by Union institutions, bodies,
         offices or agencies to assess a risk, including a security risk, a risk of irregular migration, or a health risk,
         posed by a natural person who intends to enter or who has entered into the territory of a Member State
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '2'
       label: AI systems intended to be used by or on behalf of competent public authorities or by Union institutions, bodies,
         offices or agencies to assist competent public authorities for the examination of applications for asylum, visa or
         residence permits and for associated complaints with regard to the eligibility of the natural persons applying for
         a status, including related assessments of the reliability of evidence
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '3'
       label: AI systems intended to be used by or on behalf of competent public authorities, or by Union institutions, bodies,
         offices or agencies, in the context of migration, asylum or border control management, for the purpose of detecting,
         recognising or identifying natural persons, with the exception of the verification of travel documents
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '4'
       label: None of the above
       help: ''
+    routing:
+    - conditions:
+      - if_any_answer_in:
+        - 0
+        - 1
+        - 2
+        - 3
+      - flag_equals:
+          flag_name: is_ai_highrisk_permanent
+          value: false
+      go_to: QAIS 6.5
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_2
+          value: true
+      go_to: QAIS 6.4.2
+      set_flags:
+      - flag_name: flag_should_ask_6_4_2
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_3
+          value: true
+      go_to: QAIS 6.4.3
+      set_flags:
+      - flag_name: flag_should_ask_6_4_3
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_4
+          value: true
+      go_to: QAIS 6.4.4
+      set_flags:
+      - flag_name: flag_should_ask_6_4_4
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_5
+          value: true
+      go_to: QAIS 6.4.5
+      set_flags:
+      - flag_name: flag_should_ask_6_4_5
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_6
+          value: true
+      go_to: QAIS 6.4.6
+      set_flags:
+      - flag_name: flag_should_ask_6_4_6
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_7
+          value: true
+      go_to: QAIS 6.4.7
+      set_flags:
+      - flag_name: flag_should_ask_6_4_7
+        value: false
+    - conditions: []
+      go_to: QAIS_6_hub_evaluation_risk
   QAIS 6.4.7:
     id: QAIS 6.4.7
     question: Is your AI system intended to be used for any of the following use-cases?
@@ -1189,15 +2151,92 @@ questionnaire:
         and interpreting facts and the law and in applying the law to a concrete set of facts, or to be used in a similar
         way in alternative dispute resolution
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '1'
       label: AI systems intended to be used for influencing the outcome of an election or referendum or the voting behaviour
         of natural persons in the exercise of their vote in elections or referenda. This does not include AI systems to the
         output of which natural persons are not directly exposed, such as tools used to organise, optimise or structure political
         campaigns from an administrative or logistical point of view
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
     - value: '2'
       label: None of the above
       help: ''
+    routing:
+    - conditions:
+      - if_any_answer_in:
+        - 0
+        - 1
+      - flag_equals:
+          flag_name: is_ai_highrisk_permanent
+          value: false
+      go_to: QAIS 6.5
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_2
+          value: true
+      go_to: QAIS 6.4.2
+      set_flags:
+      - flag_name: flag_should_ask_6_4_2
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_3
+          value: true
+      go_to: QAIS 6.4.3
+      set_flags:
+      - flag_name: flag_should_ask_6_4_3
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_4
+          value: true
+      go_to: QAIS 6.4.4
+      set_flags:
+      - flag_name: flag_should_ask_6_4_4
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_5
+          value: true
+      go_to: QAIS 6.4.5
+      set_flags:
+      - flag_name: flag_should_ask_6_4_5
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_6
+          value: true
+      go_to: QAIS 6.4.6
+      set_flags:
+      - flag_name: flag_should_ask_6_4_6
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_7
+          value: true
+      go_to: QAIS 6.4.7
+      set_flags:
+      - flag_name: flag_should_ask_6_4_7
+        value: false
+    - conditions: []
+      go_to: QAIS_6_hub_evaluation_risk
   QAIS 6.4:
     id: QAIS 6.4
     question: Does your AI system fall within any of the following areas?
@@ -1210,30 +2249,142 @@ questionnaire:
       label: 'Critical infrastructure: AI systems intended to be used as safety components in the management and operation
         of critical digital infrastructure, road traffic, or in the supply of water, gas, heating or electricity'
       help: See Annex III (2)
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - flag_name: critical_infrastructure
+        value: true
     - value: '1'
       label: Biometrics
       help: ''
+      set_flags:
+      - flag_name: flag_should_ask_6_4_1
+        value: true
     - value: '2'
       label: Education and vocational training
       help: ''
+      set_flags:
+      - flag_name: flag_should_ask_6_4_2
+        value: true
     - value: '3'
       label: Employment, workers' management and access to self-employment
       help: ''
+      set_flags:
+      - flag_name: flag_should_ask_6_4_3
+        value: true
     - value: '4'
       label: Access to and enjoyment of essential private services and essential public services and benefits
       help: ''
+      set_flags:
+      - flag_name: flag_should_ask_6_4_4
+        value: true
     - value: '5'
       label: Law enforcement
       help: ''
+      set_flags:
+      - flag_name: flag_should_ask_6_4_5
+        value: true
     - value: '6'
       label: Migration, asylum and border control management
       help: ''
+      set_flags:
+      - flag_name: flag_should_ask_6_4_6
+        value: true
     - value: '7'
       label: Administration of justice and democratic processes
       help: ''
+      set_flags:
+      - flag_name: flag_should_ask_6_4_7
+        value: true
     - value: '8'
       label: None of the above
       help: ''
+    routing:
+    - conditions:
+      - answer_is: 0
+      - if_none_selected_in:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+      - flag_equals:
+          flag_name: is_ai_highrisk_permanent
+          value: false
+      go_to: QAIS 6.5
+    - conditions:
+      - answer_is: 1
+      go_to: QAIS 6.4.1
+      set_flags:
+      - flag_name: flag_should_ask_6_4_1
+        value: false
+    - conditions:
+      - answer_is: 2
+      - if_none_selected_in:
+        - 1
+      go_to: QAIS 6.4.2
+      set_flags:
+      - flag_name: flag_should_ask_6_4_2
+        value: false
+    - conditions:
+      - answer_is: 3
+      - if_none_selected_in:
+        - 1
+        - 2
+      go_to: QAIS 6.4.3
+      set_flags:
+      - flag_name: flag_should_ask_6_4_3
+        value: false
+    - conditions:
+      - answer_is: 4
+      - if_none_selected_in:
+        - 1
+        - 2
+        - 3
+      go_to: QAIS 6.4.4
+      set_flags:
+      - flag_name: flag_should_ask_6_4_4
+        value: false
+    - conditions:
+      - answer_is: 5
+      - if_none_selected_in:
+        - 1
+        - 2
+        - 3
+        - 4
+      go_to: QAIS 6.4.5
+      set_flags:
+      - flag_name: flag_should_ask_6_4_5
+        value: false
+    - conditions:
+      - answer_is: 6
+      - if_none_selected_in:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+      go_to: QAIS 6.4.6
+      set_flags:
+      - flag_name: flag_should_ask_6_4_6
+        value: false
+    - conditions:
+      - answer_is: 7
+      - if_none_selected_in:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+      go_to: QAIS 6.4.7
+      set_flags:
+      - flag_name: flag_should_ask_6_4_7
+        value: false
+    - conditions: []
+      go_to: QAIS_6_hub_evaluation_risk
   QAIS 6.5:
     id: QAIS 6.5
     question: 'Could your AI system be exempted from classifying as high-risk because it does not pose a significant risk
@@ -1256,20 +2407,126 @@ questionnaire:
     - value: '0'
       label: Yes. The AI system is intended to perform a narrow procedural task
       help: ''
+      set_flags:
+      - flag_name: flag_derogation_6_5_granted_at_least_for_one_subquestion_6_4_x
+        value: true
     - value: '1'
       label: Yes. The AI system is intended to improve the result of a previously completed human activity
       help: ''
+      set_flags:
+      - flag_name: flag_derogation_6_5_granted_at_least_for_one_subquestion_6_4_x
+        value: true
     - value: '2'
       label: Yes. The AI system is intended to detect decision-making patterns or deviations from prior decision-making patterns
         and is not meant to replace or influence the previously completed human assessment, without proper human review
       help: ''
+      set_flags:
+      - flag_name: flag_derogation_6_5_granted_at_least_for_one_subquestion_6_4_x
+        value: true
     - value: '3'
       label: Yes. The AI system is intended to perform a preparatory task to an assessment relevant for the purposes of the
         use cases listed in Annex III
       help: ''
+      set_flags:
+      - flag_name: flag_derogation_6_5_granted_at_least_for_one_subquestion_6_4_x
+        value: true
     - value: '4'
       label: None of the above / The system performs profiling of natural person
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_aisystem_highrisk_output
+        value: true
+      - flag_name: flag_derogation_6_5_refused_at_least_for_one_subquestion_6_4_x
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: provider
+        flag_name: flag_obligations_provider_results_high_risk
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        flag_name: flag_obligations_deployer_output
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        - flag_equals:
+            flag_name: critical_infrastructure
+            value: false
+        flag_name: flag_fr_impact_assessment_deployer
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_ai_system_role
+            value: deployer
+        - flag_equals:
+            flag_name: critical_infrastructure
+            value: false
+        flag_name: flag_obligations_aisystem_nohighrisk_output
+        value: false
+    routing:
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_1
+          value: true
+      go_to: QAIS 6.4.1
+      set_flags:
+      - flag_name: flag_should_ask_6_4_1
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_2
+          value: true
+      go_to: QAIS 6.4.2
+      set_flags:
+      - flag_name: flag_should_ask_6_4_2
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_3
+          value: true
+      go_to: QAIS 6.4.3
+      set_flags:
+      - flag_name: flag_should_ask_6_4_3
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_4
+          value: true
+      go_to: QAIS 6.4.4
+      set_flags:
+      - flag_name: flag_should_ask_6_4_4
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_5
+          value: true
+      go_to: QAIS 6.4.5
+      set_flags:
+      - flag_name: flag_should_ask_6_4_5
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_6
+          value: true
+      go_to: QAIS 6.4.6
+      set_flags:
+      - flag_name: flag_should_ask_6_4_6
+        value: false
+    - conditions:
+      - flag_equals:
+          flag_name: flag_should_ask_6_4_7
+          value: true
+      go_to: QAIS 6.4.7
+      set_flags:
+      - flag_name: flag_should_ask_6_4_7
+        value: false
+    - conditions: []
+      go_to: QAIS_6_hub_evaluation_risk
   QAIS 6:
     id: QAIS 6
     question: Is your AI system, or the product in which it is intended to be used as a safety component, subject to sector-specific
@@ -1289,6 +2546,16 @@ questionnaire:
     - value: '2'
       label: Uncertain
       help: ''
+    routing:
+    - conditions:
+      - answer_is: 0
+      go_to: QAIS 6.1
+    - conditions:
+      - answer_is: 1
+      go_to: QAIS 6.4
+    - conditions:
+      - answer_is: 2
+      go_to: QAIS 6.1
   QAIS 7.1:
     id: QAIS 7.1
     question: Does your AI system perform any of these functions?
@@ -1305,14 +2572,34 @@ questionnaire:
         by law to detect, prevent, investigate or prosecute criminal offences, subject to appropriate safeguards for the rights
         and freedoms of third parties, unless those systems are available for the public to report a criminal offence (Article
         50 (1)).
+      set_flags:
+      - flag_name: flag_obligation_transparency_provider
+        value: true
     - value: '1'
       label: The AI system generates synthetic audio, image, video or text content
       help: '''This (…) shall not apply to the extent the AI systems perform an assistive function for standard editing or
         do not substantially alter the input data provided by the deployer or the semantics thereof, or where authorised by
         law to detect, prevent, investigate or prosecute criminal offences'' (Article 50 (2))'
+      set_flags:
+      - flag_name: flag_obligation_transparency_provider
+        value: true
     - value: '2'
       label: None of the above
       help: ''
+    routing:
+    - conditions:
+      - flag_equals:
+          flag_name: flag_risklevel_aisystem_highrisk_output
+          value: false
+      - flag_equals:
+          flag_name: flag_obligation_transparency_provider
+          value: false
+      - flag_equals:
+          flag_name: flag_obligation_transparency_deployer
+          value: false
+      go_to: QAIS 8
+    - conditions: []
+      go_to: END
   QAIS 7.2:
     id: QAIS 7.2
     question: Does your AI system perform any of these functions?
@@ -1325,17 +2612,40 @@ questionnaire:
       help: '''This (…) shall not apply to AI systems used for biometric categorisation and emotion recognition, which are
         permitted by law to detect, prevent or investigate criminal offences, subject to appropriate safeguards for the rights
         and freedoms of third parties, and in accordance with Union law'' (Article 50 (3)).'
+      set_flags:
+      - flag_name: flag_obligation_transparency_deployer
+        value: true
     - value: '1'
       label: The AI system generates or manipulates image, audio or video content that would falsely appear to a person to
         be authentic (deep fake)
       help: ''
+      set_flags:
+      - flag_name: flag_obligation_transparency_deployer
+        value: true
     - value: '2'
       label: The AI system generates or manipulates text that is published with the purpose of informing the public on matters
         of public interest
       help: ''
+      set_flags:
+      - flag_name: flag_obligation_transparency_deployer
+        value: true
     - value: '3'
       label: None of the above
       help: ''
+    routing:
+    - conditions:
+      - flag_equals:
+          flag_name: flag_risklevel_aisystem_highrisk_output
+          value: false
+      - flag_equals:
+          flag_name: flag_obligation_transparency_provider
+          value: false
+      - flag_equals:
+          flag_name: flag_obligation_transparency_deployer
+          value: false
+      go_to: QAIS 8
+    - conditions: []
+      go_to: END
   QAIS 8:
     id: QAIS 8
     question: Is your AI system released under free and open-source licences?
@@ -1353,9 +2663,59 @@ questionnaire:
     - value: '0'
       label: 'Yes'
       help: ''
+      set_flags:
+      - flag_name: flag_obligations_provideranddeployer_ailiteracy
+        value: false
+      - flag_name: flag_obligations_aisystem_opensource
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_obligations_provider_results_high_risk
+            value: true
+        flag_name: flag_obligations_aisystem_opensource
+        value: false
+      - condition:
+        - flag_equals:
+            flag_name: flag_obligations_authorisdrepre_results_high_risk
+            value: true
+        flag_name: flag_obligations_aisystem_opensource
+        value: false
+      - condition:
+        - flag_equals:
+            flag_name: flag_obligations_importer_output
+            value: true
+        flag_name: flag_obligations_aisystem_opensource
+        value: false
+      - condition:
+        - flag_equals:
+            flag_name: flag_obligations_distributor_output
+            value: true
+        flag_name: flag_obligations_aisystem_opensource
+        value: false
+      - condition:
+        - flag_equals:
+            flag_name: flag_obligations_deployer_output
+            value: true
+        flag_name: flag_obligations_aisystem_opensource
+        value: false
+      - condition:
+        - flag_equals:
+            flag_name: flag_obligation_transparency_provider
+            value: true
+        flag_name: flag_obligations_aisystem_opensource
+        value: false
+      - condition:
+        - flag_equals:
+            flag_name: flag_obligation_transparency_deployer
+            value: true
+        flag_name: flag_obligations_aisystem_opensource
+        value: false
     - value: '1'
       label: 'No'
       help: ''
+    routing:
+    - conditions: []
+      go_to: END
   QGPAI 1:
     id: QGPAI 1
     question: 'Does your AI model qualify as a general-purpose AI model under the AI Act? '
@@ -1381,6 +2741,16 @@ questionnaire:
     - value: '1'
       label: 'No'
       help: ''
+      set_flags:
+      - flag_name: flag_notaimodel_result_output
+        value: true
+    routing:
+    - conditions:
+      - answer_is: 0
+      go_to: QGPAI 2
+    - conditions:
+      - answer_is: 1
+      go_to: END
   QGPAI 2:
     id: QGPAI 2
     question: Which of the following statements apply to your general-purpose AI model?
@@ -1418,12 +2788,32 @@ questionnaire:
     - value: '0'
       label: 'The model has high-impact capabilities '
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_output_gpai_with_systemic_risk
+        value: true
+      - flag_name: flag_aimodel_obligations_systemicrisk_result_output
+        value: true
     - value: '1'
       label: 'The Commission designated the model as presenting systemic risk '
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_output_gpai_with_systemic_risk
+        value: true
+      - flag_name: flag_aimodel_obligations_systemicrisk_result_output
+        value: true
     - value: '2'
       label: None of the above
       help: ''
+      set_flags:
+      - flag_name: flag_risklevel_output_gpai_without_systemic_risk
+        value: true
+      - flag_name: flag_aimodel_obligations_nosystemicrisk_result_output
+        value: true
+      - flag_name: flag_risklevel_output_gpai_with_systemic_risk
+        value: false
+    routing:
+    - conditions: []
+      go_to: QGPAI 3
   QGPAI 3:
     id: QGPAI 3
     question: 'What is your role? '
@@ -1450,10 +2840,22 @@ questionnaire:
         The European Commission’s [guidelines on the scope of the obligations for general-purpose AI models](https://ai-act-service-desk.ec.europa.eu/sites/default/files/2025-07/guidelines_on_the_scope_of_the_obligations_for_generalpurpose_ai_models_established_by_regulation_1cx2atxgq79us4n3x8jfgyy1qlm_118340-3.pdf#page=18)
         provide extensive examples of what actions constitute placing on the market in Section 3.1.2 ''Examples of placing
         on the market of general-purpose AI models''.'
+      set_flags:
+      - flag_name: flag_role_provider_gpai_output
+        value: true
     - value: '1'
       label: 'Authorised representative of a provider of a general-purpose AI model '
       help: You are located or established in the Union and have received a written mandate from a provider of a general-purpose
         AI model (established outside the Union) to act on their behalf for compliance with the AI Act (Article 3(5) AI Act).
+      set_flags:
+      - flag_name: flag_role_authorized_representative_gpai_output
+        value: true
+      - flag_name: flag_aimodel_obligations_systemicrisk_result_output
+        value: false
+      - flag_name: flag_aimodel_obligations_nosystemicrisk_result_output
+        value: false
+      - flag_name: flag_obligations_authorisedrep
+        value: true
     - value: '2'
       label: Downstream modifier of a general-purpose AI model
       help: 'You modify a general-purpose AI model from another provider and place it on the Union market under your own name
@@ -1461,6 +2863,29 @@ questionnaire:
     - value: '3'
       label: None of the above
       help: ''
+      set_flags:
+      - flag_name: flag_outofscope_gpai
+        value: true
+      - flag_name: flag_aimodel_obligations_nosystemicrisk_result_output
+        value: false
+      - flag_name: flag_obligations_authorisedrep
+        value: false
+      - flag_name: flag_aimodel_obligations_systemicrisk_result_output
+        value: false
+    routing:
+    - conditions:
+      - answer_is: 2
+      go_to: QGPAI 3.1
+    - conditions:
+      - answer_is: 3
+      go_to: END
+    - conditions:
+      - flag_equals:
+          flag_name: flag_risklevel_output_gpai_with_systemic_risk
+          value: true
+      go_to: END
+    - conditions: []
+      go_to: QGPAI 7
   QGPAI 3.1:
     id: QGPAI 3.1
     question: Is your modification leading to a significant change in the model’s generality, capabilities, or systemic risk?
@@ -1478,9 +2903,35 @@ questionnaire:
     - value: '0'
       label: 'Yes'
       help: ''
+      set_flags:
+      - flag_name: flag_role_provider_gpai_output
+        value: true
+      - flag_name: flag_downstream_modifier
+        value: true
     - value: '1'
       label: 'No'
       help: ''
+      set_flags:
+      - flag_name: flag_outofscope_gpai
+        value: true
+      - flag_name: flag_aimodel_obligations_nosystemicrisk_result_output
+        value: false
+      - flag_name: flag_obligations_authorisedrep
+        value: false
+      - flag_name: flag_aimodel_obligations_systemicrisk_result_output
+        value: false
+    routing:
+    - conditions:
+      - flag_equals:
+          flag_name: flag_risklevel_output_gpai_with_systemic_risk
+          value: true
+      go_to: END
+    - conditions:
+      - answer_is: 0
+      go_to: QGPAI 7
+    - conditions:
+      - answer_is: 1
+      go_to: END
   QGPAI 7:
     id: QGPAI 7
     question: 'Does your model qualify for open-source exceptions? '
@@ -1498,9 +2949,52 @@ questionnaire:
     - value: '0'
       label: 'Yes'
       help: ''
+      set_flags:
+      - condition:
+        - flag_equals:
+            flag_name: flag_risklevel_output_gpai_with_systemic_risk
+            value: false
+        flag_name: flag_obligations_opensource_provider
+        value: true
+      - flag_name: flag_aimodel_obligations_nosystemicrisk_result_output
+        value: false
+      - condition:
+        - flag_equals:
+            flag_name: flag_risklevel_output_gpai_with_systemic_risk
+            value: false
+        - flag_equals:
+            flag_name: flag_role_authorized_representative_gpai_output
+            value: true
+        flag_name: flag_obligations_authorisedrep_nosystemicrisk_opensource
+        value: true
+      - condition:
+        - flag_equals:
+            flag_name: flag_risklevel_output_gpai_with_systemic_risk
+            value: false
+        - flag_equals:
+            flag_name: flag_role_authorized_representative_gpai_output
+            value: true
+        flag_name: flag_obligations_authorisedrep
+        value: false
+      - condition:
+        - flag_equals:
+            flag_name: flag_risklevel_output_gpai_with_systemic_risk
+            value: false
+        - flag_equals:
+            flag_name: flag_role_authorized_representative_gpai_output
+            value: true
+        flag_name: flag_obligations_opensource_provider
+        value: false
     - value: '1'
       label: 'No'
       help: ''
+    routing:
+    - conditions:
+      - answer_is: 0
+      go_to: END
+    - conditions:
+      - answer_is: 1
+      go_to: END
 results:
   flag_outofscope:
     id: flag_outofscope

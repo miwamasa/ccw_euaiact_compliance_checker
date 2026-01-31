@@ -1,0 +1,167 @@
+{
+  "optimized_order": [
+    {
+      "question": "QGPAI 7",
+      "score": 9.132,
+      "original_avg_depth": 5.33,
+      "terminal_prob": 1.0,
+      "ig": 4.6496
+    },
+    {
+      "question": "QGPAI 3.1",
+      "score": 8.57,
+      "original_avg_depth": 5.0,
+      "terminal_prob": 0.714,
+      "ig": 4.6497
+    },
+    {
+      "question": "QAIS 7.1",
+      "score": 8.347,
+      "original_avg_depth": 11.86,
+      "terminal_prob": 1.0,
+      "ig": 4.1793
+    },
+    {
+      "question": "QGPAI 3",
+      "score": 7.948,
+      "original_avg_depth": 4.0,
+      "terminal_prob": 0.389,
+      "ig": 4.6469
+    },
+    {
+      "question": "QGPAI 1",
+      "score": 7.403,
+      "original_avg_depth": 2.0,
+      "terminal_prob": 0.053,
+      "ig": 4.6432
+    },
+    {
+      "question": "QGPAI 2",
+      "score": 7.218,
+      "original_avg_depth": 3.0,
+      "terminal_prob": 0.0,
+      "ig": 4.6455
+    },
+    {
+      "question": "QAIS 6.3",
+      "score": 7.068,
+      "original_avg_depth": 9.86,
+      "terminal_prob": 0.0,
+      "ig": 4.6509
+    },
+    {
+      "question": "QAIS 2.2",
+      "score": 6.782,
+      "original_avg_depth": 4.86,
+      "terminal_prob": 0.007,
+      "ig": 4.3986
+    },
+    {
+      "question": "QAIS 6.2",
+      "score": 6.086,
+      "original_avg_depth": 10.86,
+      "terminal_prob": 0.175,
+      "ig": 3.7676
+    },
+    {
+      "question": "QAIS 6",
+      "score": 5.755,
+      "original_avg_depth": 8.68,
+      "terminal_prob": 0.0,
+      "ig": 3.7676
+    },
+    {
+      "question": "QAIS 6.1",
+      "score": 5.745,
+      "original_avg_depth": 9.68,
+      "terminal_prob": 0.0,
+      "ig": 3.7676
+    },
+    {
+      "question": "QAIS 5",
+      "score": 4.931,
+      "original_avg_depth": 7.71,
+      "terminal_prob": 0.615,
+      "ig": 2.39
+    },
+    {
+      "question": "QAIS 2",
+      "score": 3.857,
+      "original_avg_depth": 3.86,
+      "terminal_prob": 0.001,
+      "ig": 2.4332
+    },
+    {
+      "question": "QAIS 2.1",
+      "score": 3.513,
+      "original_avg_depth": 4.86,
+      "terminal_prob": 0.0,
+      "ig": 2.2282
+    },
+    {
+      "question": "QAIS 4",
+      "score": 2.07,
+      "original_avg_depth": 6.72,
+      "terminal_prob": 0.235,
+      "ig": 0.98
+    },
+    {
+      "question": "QAIS 1.1",
+      "score": 1.292,
+      "original_avg_depth": 3.0,
+      "terminal_prob": 0.0,
+      "ig": 0.6944
+    },
+    {
+      "question": "Q1",
+      "score": 0.537,
+      "original_avg_depth": 1.0,
+      "terminal_prob": 0.0,
+      "ig": 0.0248
+    },
+    {
+      "question": "QAIS 3",
+      "score": 0.425,
+      "original_avg_depth": 5.72,
+      "terminal_prob": 0.014,
+      "ig": 0.1646
+    },
+    {
+      "question": "QAIS 1",
+      "score": 0.386,
+      "original_avg_depth": 2.0,
+      "terminal_prob": 0.0,
+      "ig": 0.0349
+    }
+  ],
+  "recommended_flow": {
+    "entry": "Q1",
+    "ai_system_track": [
+      "QAIS 7.1",
+      "QAIS 6.3",
+      "QAIS 2.2",
+      "QAIS 6.2",
+      "QAIS 6",
+      "QAIS 6.1",
+      "QAIS 5",
+      "QAIS 2",
+      "QAIS 2.1",
+      "QAIS 4",
+      "QAIS 1.1",
+      "QAIS 3",
+      "QAIS 1"
+    ],
+    "gpai_track": [
+      "QGPAI 7",
+      "QGPAI 3.1",
+      "QGPAI 3",
+      "QGPAI 1",
+      "QGPAI 2"
+    ],
+    "estimated_improvement": {
+      "avg_path_reduction": "20-30%",
+      "early_termination_rate": "Increased",
+      "user_experience": "Improved (fewer questions for common cases)"
+    }
+  }
+}
