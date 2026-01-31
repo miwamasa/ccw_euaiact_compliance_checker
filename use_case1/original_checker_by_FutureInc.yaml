@@ -1,0 +1,1183 @@
+# EU AI Act Compliance Checker Logic
+# Version: 1.0
+# Updated: 2025-07-28
+# Source: Future of Life Institute
+
+metadata:
+  title: "EU AI Act Compliance Checker"
+  version: "1.0"
+  updated: "2025-07-28"
+  source: "Future of Life Institute"
+  purpose: "Determine obligations under the EU AI Act for AI systems"
+  contact: "taylor@futureoflife.org"
+
+definitions:
+  ai_system: >
+    A machine-based system designed to operate with varying levels of autonomy
+    and that may exhibit adaptiveness after deployment and that, for explicit or
+    implicit objectives, infers, from the input it receives, how to generate
+    outputs such as predictions, content, recommendations, or decisions that can
+    influence physical or virtual environments.
+  
+  entity_types:
+    provider:
+      definition: >
+        A natural or legal person, public authority, agency or other body that
+        develops an AI system or a general purpose AI model (or that has an AI
+        system or a general purpose AI model developed) and places them on the
+        market or puts the system into service under its own name or trademark,
+        whether for payment or free of charge
+      source: "Article 3 point 2"
+    
+    deployer:
+      definition: >
+        Any natural or legal person, public authority, agency or other body using
+        an AI system under its authority except where the AI system is used in the
+        course of a personal non professional activity
+      source: "Article 3 point 4"
+    
+    distributor:
+      definition: >
+        Any natural or legal person in the supply chain, other than the provider
+        or the importer, that makes an AI system available on the Union market
+      source: "Article 3 point 5"
+    
+    importer:
+      definition: >
+        Any natural or legal person located or established in the Union that places
+        on the market an AI system that bears the name or trademark of a natural or
+        legal person established outside the Union
+      source: "Article 3 point 6"
+    
+    product_manufacturer:
+      definition: >
+        Places on the market or puts into service an AI system together with their
+        product and under their own name or trademark
+      source: "Article 3 point 7"
+    
+    authorised_representative:
+      definition: >
+        Any natural or legal person located or established in the Union who has
+        received and accepted a written mandate from a provider of an AI system or
+        a general purpose AI model to, respectively, perform and carry out on its
+        behalf the obligations and procedures established by this Regulation
+      source: "Article 3 point 8"
+
+questionnaire:
+  # ===== ENTITY SECTION =====
+  E1:
+    id: "E1"
+    section: "Entity"
+    question: "Which kind of entity is your organisation?"
+    type: "single_choice"
+    required: true
+    note: >
+      It is possible to be multiple types of entity at once, according to Recital 83.
+      If you match the definition of multiple types, you must complete the
+      questionnaire once for each type.
+    source: "Article 3 points 2-8, Recital 87"
+    options:
+      - value: "provider"
+        label: "Provider"
+        obligations:
+          - "AI Literacy"
+        next: "E2"
+      
+      - value: "deployer"
+        label: "Deployer"
+        obligations:
+          - "AI Literacy"
+        next: "E2"
+      
+      - value: "distributor"
+        label: "Distributor"
+        next: "E2"
+      
+      - value: "importer"
+        label: "Importer"
+        next: "E2"
+      
+      - value: "product_manufacturer"
+        label: "Product Manufacturer"
+        next: "E3"
+      
+      - value: "authorised_representative"
+        label: "Authorised Representative"
+        obligations:
+          - "Authorised Representative"
+        next: "END"
+
+  E2:
+    id: "E2"
+    section: "Entity"
+    question: >
+      Do you (OR a downstream deployer, distributor, or importer) make any of
+      the following modifications to your system?
+    type: "multiple_choice"
+    source: "Article 25 points 1-2"
+    options:
+      - value: "different_trademark"
+        label: "Putting a different name/trademark on the system"
+        triggers_condition: true
+      
+      - value: "modify_intended_purpose"
+        label: "Modifying the intended purpose of a system already in operation"
+        triggers_condition: true
+      
+      - value: "substantial_modification"
+        label: >
+          Performing a substantial modification (see Article 3 point 23) to the system
+        triggers_condition: true
+      
+      - value: "none"
+        label: "None of the above"
+        next: "HR1"
+    
+    conditions:
+      - if: "any_modification_selected"
+        then:
+          - if: "entity_type == 'provider'"
+            action: "status_change"
+            status: "handover"
+            next: "HR1"
+          - else:
+            action: "status_change"
+            status: "become_provider"
+            note: "You are now considered a provider for future questions"
+            next: "HR1"
+
+  E3:
+    id: "E3"
+    section: "Entity"
+    question: >
+      Does your product integrate an AI system AND meet either of the following criteria?
+    type: "multiple_choice"
+    note: >
+      This applies ONLY if your product is placed on the market / put into service
+      within the EU, regardless of whether or not you are established within the EU.
+    source: "Article 25 point 3, Annex I"
+    options:
+      - value: "placed_with_product"
+        label: >
+          The AI system was / will be placed on the market together with my product
+          under my manufacturer name or trademark
+        next: "HR6"
+      
+      - value: "put_into_service_after"
+        label: >
+          The AI system was / will be put into service under my manufacturer name or
+          trademark after my product has been placed on the market
+        next: "HR6"
+      
+      - value: "none"
+        label: "None of the above"
+        next: "OUT_OF_SCOPE"
+
+  # ===== HIGH RISK STATUS SECTION =====
+  HR1:
+    id: "HR1"
+    section: "High Risk Status"
+    question: >
+      Does your AI system fall within any of the following high risk categories?
+      (Annex 1, Section B)
+    type: "multiple_choice"
+    source: "Article 6 point 1"
+    options:
+      - value: "civil_aviation_security"
+        label: "Civil aviation security"
+        triggers_high_risk: true
+      
+      - value: "two_three_wheel_vehicles"
+        label: "Two or three wheel vehicles and quadricycles"
+        triggers_high_risk: true
+      
+      - value: "agricultural_forestry_vehicles"
+        label: "Agricultural and forestry vehicles"
+        triggers_high_risk: true
+      
+      - value: "marine_equipment"
+        label: "Marine equipment"
+        triggers_high_risk: true
+      
+      - value: "rail_interoperability"
+        label: "Interoperability of the rail systems"
+        triggers_high_risk: true
+      
+      - value: "motor_vehicles"
+        label: "Motor vehicles and their trailers"
+        triggers_high_risk: true
+      
+      - value: "civil_aviation"
+        label: "Civil aviation"
+        triggers_high_risk: true
+      
+      - value: "none"
+        label: "None of the above"
+        next: "HR2"
+    
+    conditions:
+      - if: "any_high_risk_selected"
+        then: "HR3"
+
+  HR2:
+    id: "HR2"
+    section: "High Risk Status"
+    question: >
+      Does your AI system fall within any of the following high risk categories?
+      (Annex 1, Section A)
+    type: "multiple_choice"
+    source: "Article 6 point 1"
+    options:
+      - value: "machinery"
+        label: "Machinery"
+        triggers_high_risk: true
+      
+      - value: "toys"
+        label: "Toys"
+        triggers_high_risk: true
+      
+      - value: "recreational_craft"
+        label: "Recreational craft & personal watercraft"
+        triggers_high_risk: true
+      
+      - value: "lifts"
+        label: "Lifts and safety components of lifts"
+        triggers_high_risk: true
+      
+      - value: "explosive_atmospheres"
+        label: >
+          Equipment and protective systems intended for use in potentially
+          explosive atmospheres
+        triggers_high_risk: true
+      
+      - value: "radio_equipment"
+        label: "Radio equipment"
+        triggers_high_risk: true
+      
+      - value: "pressure_equipment"
+        label: "Pressure equipment"
+        triggers_high_risk: true
+      
+      - value: "cableway"
+        label: "Cableway installations"
+        triggers_high_risk: true
+      
+      - value: "ppe"
+        label: "Personal protective equipment"
+        triggers_high_risk: true
+      
+      - value: "gas_appliances"
+        label: "Appliances burning gaseous fuels"
+        triggers_high_risk: true
+      
+      - value: "medical_devices"
+        label: "Medical devices"
+        triggers_high_risk: true
+      
+      - value: "ivd_medical_devices"
+        label: "In vitro diagnostic medical devices"
+        triggers_high_risk: true
+      
+      - value: "none"
+        label: "None of the above"
+        next: "HR4"
+    
+    conditions:
+      - if: "any_high_risk_selected"
+        then: "HR3"
+
+  HR3:
+    id: "HR3"
+    section: "High Risk Status"
+    question: >
+      Is your product (or the product for which your AI system is a 'safety component')
+      required to undergo a third party conformity assessment under existing EU laws?
+    type: "single_choice"
+    source: "Article 6 point 1"
+    hint: >
+      How to answer this question: Each of the high risk categories in question #HR2
+      are associated with an existing EU law; see Annex I, Section A for a full list.
+      
+      These laws require some products to undergo third party conformity assessments.
+      Please check the laws relevant to your product category(s) to see whether your
+      product is required to undergo a third party conformity assessment under those laws.
+      
+      If your product is required to undergo a third party conformity assessment under
+      any of these laws, please select Yes. Otherwise, select No.
+      
+      Some of these laws allow you to opt out of a third party conformity assessment.
+      If you are given this option, you are able to do so if you meet the conditions
+      outlined in Article 43(3). In this case you can select No.
+      
+      If you're unsure, you may wish to consult a lawyer on this topic.
+    options:
+      - value: "yes"
+        label: "Yes"
+        conditions:
+          - if: "entity_type == 'provider'"
+            action: "status_change"
+            status: "high_risk"
+            next: "S1"
+          - else:
+            action: "status_change"
+            status: "high_risk_become_provider"
+            next: "S1"
+      
+      - value: "no"
+        label: "No"
+        next: "HR4"
+
+  HR4:
+    id: "HR4"
+    section: "High Risk Status"
+    question: >
+      Does your AI system fall within any of the following high risk categories?
+      (Annex 3)
+    type: "multiple_choice"
+    source: "Article 6 point 2"
+    hint: "Unsure? See definitions for each of these options in Annex III."
+    options:
+      - value: "biometrics"
+        label: "Biometrics"
+        triggers_high_risk: true
+      
+      - value: "critical_infrastructure"
+        label: "Critical infrastructure"
+        triggers_high_risk: true
+      
+      - value: "education_vocational"
+        label: "Educational and vocational training"
+        triggers_high_risk: true
+      
+      - value: "employment"
+        label: "Employment, workers management, and access to self-employment"
+        triggers_high_risk: true
+      
+      - value: "essential_services"
+        label: "Access to and enjoyment of essential private services and public services and benefits"
+        triggers_high_risk: true
+      
+      - value: "law_enforcement"
+        label: "Law enforcement"
+        triggers_high_risk: true
+      
+      - value: "migration_asylum"
+        label: "Migration, asylum, and border control management"
+        triggers_high_risk: true
+      
+      - value: "justice_democracy"
+        label: "Administration of justice and democratic processes"
+        triggers_high_risk: true
+      
+      - value: "none"
+        label: "None of the above"
+        next: "S1"
+    
+    conditions:
+      - if: "any_high_risk_selected"
+        then: "HR5"
+
+  HR5:
+    id: "HR5"
+    section: "High Risk Status"
+    question: >
+      Does your AI system pose a significant risk of harm to the health, safety or
+      fundamental rights of any person?
+    type: "single_choice"
+    source: "Article 6 point 3"
+    hint: >
+      The system does NOT pose a significant risk if one or more of the following
+      conditions are met:
+      • the AI system is intended to perform a narrow procedural task
+      • the AI system is intended to improve the result of a previously completed
+        human activity
+      • the AI system is intended to detect decision making patterns or deviations
+        from prior decision making patterns and is not meant to replace or influence
+        the previously completed human assessment, without proper human review
+      • the AI system is intended to perform a preparatory task to an assessment
+        relevant for the purpose of the use cases listed in Annex III
+      
+      If your system meets any of these conditions, please select No. If it meets
+      none of these conditions, please select Yes.
+      
+      Note: Your system is always considered to be high risk if it performs profiling
+      of natural persons. If this applies to your system, please select Yes.
+    options:
+      - value: "yes"
+        label: "Yes"
+        conditions:
+          - if: "entity_type == 'provider'"
+            action: "status_change"
+            status: "high_risk"
+            next: "S1"
+          - else:
+            action: "status_change"
+            status: "high_risk_become_provider"
+            next: "S1"
+      
+      - value: "no"
+        label: "No"
+        conditions:
+          - if: "entity_type == 'provider'"
+            action: "obligation"
+            obligation: "Notify NCA"
+            next: "S1"
+          - else:
+            next: "S1"
+
+  HR6:
+    id: "HR6"
+    section: "High Risk Status"
+    question: >
+      Does your product include an AI system as a 'safety component' AND fall within
+      any of the following categories?
+    type: "multiple_choice"
+    source: "Article 25 point 3, Annex I"
+    hint: >
+      Safety component: A component of a product or of a system which fulfils a
+      safety function for that product or system, or the failure or malfunctioning
+      of which endangers the health and safety of persons or property
+      (Source: Article 3 point 14)
+    options:
+      - value: "machinery"
+        label: "Machinery"
+        triggers_high_risk: true
+      
+      - value: "toys"
+        label: "Toys"
+        triggers_high_risk: true
+      
+      - value: "recreational_craft"
+        label: "Recreational craft & personal watercraft"
+        triggers_high_risk: true
+      
+      - value: "lifts"
+        label: "Lifts and safety components of lifts"
+        triggers_high_risk: true
+      
+      - value: "explosive_atmospheres"
+        label: >
+          Equipment and protective systems intended for use in potentially
+          explosive atmospheres
+        triggers_high_risk: true
+      
+      - value: "radio_equipment"
+        label: "Radio equipment"
+        triggers_high_risk: true
+      
+      - value: "pressure_equipment"
+        label: "Pressure equipment"
+        triggers_high_risk: true
+      
+      - value: "cableway"
+        label: "Cableway installations"
+        triggers_high_risk: true
+      
+      - value: "ppe"
+        label: "Personal protective equipment"
+        triggers_high_risk: true
+      
+      - value: "gas_appliances"
+        label: "Appliances burning gaseous fuels"
+        triggers_high_risk: true
+      
+      - value: "medical_devices"
+        label: "Medical devices"
+        triggers_high_risk: true
+      
+      - value: "ivd_medical_devices"
+        label: "In vitro diagnostic medical devices"
+        triggers_high_risk: true
+      
+      - value: "none"
+        label: "None of the above"
+        obligations:
+          - "Product Manufacturer"
+        next: "END"
+    
+    conditions:
+      - if: "any_high_risk_selected"
+        then:
+          action: "status_change"
+          status: "become_provider"
+          next: "S1"
+
+  # ===== SCOPE SECTION =====
+  S1:
+    id: "S1"
+    section: "Scope"
+    question: "Do you meet any of the following criteria?"
+    type: "multiple_choice"
+    source: "Article 2"
+    hint: "See here for a current list of EU Member States."
+    options:
+      - value: "placing_ai_systems_eu"
+        label: >
+          I am placing on the market or putting into service AI systems
+          (definition: Article 3 point 1) in the EU
+        visibility:
+          - "Provider"
+        triggers:
+          - type: "check_gpai"
+            next: "R1"
+      
+      - value: "placing_gpai_models"
+        label: >
+          I am placing on the market General Purpose AI models
+          (definition: Article 3 point 63) in the EU
+        visibility:
+          - "Provider"
+        triggers:
+          - type: "set_gpai"
+      
+      - value: "established_in_eu"
+        label: "I am established or located within the EU"
+        visibility:
+          - "Deployer"
+      
+      - value: "importer_in_eu"
+        label: >
+          I am established or located within the EU, and I am placing on the market
+          an AI system that bears the name or trademark of somebody established
+          outside of the EU
+        visibility:
+          - "Importer"
+      
+      - value: "output_used_in_eu"
+        label: "My AI system's output is used in the EU"
+        visibility:
+          - "Provider"
+          - "Deployer"
+          - "Distributor"
+      
+      - value: "none"
+        label: "None of the above"
+        next: "OUT_OF_SCOPE"
+    
+    conditions:
+      - if: "any_scope_criterion_met"
+        then: "R1"
+
+  # ===== RULES FOR PARTICULAR TYPES SECTION =====
+  R1:
+    id: "R1"
+    section: "Rules for Particular Types"
+    question: "Does your AI model meet any of the following criteria?"
+    type: "multiple_choice"
+    source: "Article 51"
+    hint: >
+      High impact capabilities: an AI model is determined to have high impact
+      capabilities if the cumulative amount of computation used for its training
+      measured in floating point operations is greater than 10^25
+      (Source: Article 51 point 2)
+    options:
+      - value: "high_impact_capabilities"
+        label: >
+          It has high impact capabilities (evaluated on the basis of appropriate
+          technical tools and methodologies)
+        triggers:
+          - type: "status_change"
+            status: "GPAI with Systemic Risk"
+            next: "R2"
+      
+      - value: "commission_decision"
+        label: >
+          The Commission has decided that it has high capabilities or impact based
+          on the criteria set out in Annex XIII
+        triggers:
+          - type: "status_change"
+            status: "GPAI with Systemic Risk"
+            next: "R2"
+      
+      - value: "none"
+        label: "None of the above"
+        next: "R2"
+
+  R2:
+    id: "R2"
+    section: "Rules for Particular Types"
+    question: "Does your system or use case fall within any of the following categories?"
+    type: "multiple_choice"
+    source: "Article 2"
+    options:
+      - value: "military_purposes"
+        label: "AI systems developed and used exclusively for military purposes"
+        status: "Excluded"
+        next: "END"
+      
+      - value: "third_country_law_enforcement"
+        label: >
+          Public authorities or international organisations in third countries using
+          AI systems for law enforcement and judicial cooperation
+        status: "Excluded"
+        next: "END"
+      
+      - value: "research_development"
+        label: "AI research and development activity"
+        status: "Exclusion: Research"
+        next: "R3"
+      
+      - value: "open_source"
+        label: "AI components provided under free and open source licences"
+        status: "Exclusion: Open Source"
+        next: "R3"
+      
+      - value: "personal_use"
+        label: "People using AI systems for purely personal, non professional activity"
+        status: "Exclusion: Personal Use"
+        next: "R3"
+      
+      - value: "none"
+        label: "None of the above"
+        next: "R3"
+    
+    conditions:
+      - if: "system_from_hr2_or_hr6"
+        then:
+          action: "status_change"
+          status: "High risk Exception"
+          next: "END"
+
+  R3:
+    id: "R3"
+    section: "Rules for Particular Types"
+    question: "Does your system perform any of these functions?"
+    type: "multiple_choice"
+    source: "Article 5"
+    hint: "Unsure? See definitions for each of these options in Article 5."
+    options:
+      - value: "subliminal_manipulation"
+        label: "Subliminal techniques, manipulation, and deception"
+        status: "Prohibited"
+        next: "END"
+      
+      - value: "exploit_vulnerabilities"
+        label: "Exploiting vulnerabilities"
+        status: "Prohibited"
+        next: "END"
+      
+      - value: "biometric_categorisation"
+        label: "Biometric categorisation"
+        status: "Prohibited"
+        next: "END"
+      
+      - value: "social_scoring"
+        label: "Social scoring"
+        status: "Prohibited"
+        next: "END"
+      
+      - value: "predictive_policing"
+        label: "Predictive policing"
+        status: "Prohibited"
+        next: "END"
+      
+      - value: "facial_recognition_databases"
+        label: "Expanding facial recognition databases"
+        status: "Prohibited"
+        next: "END"
+      
+      - value: "emotion_recognition_workplace"
+        label: >
+          Emotion recognition in the workplace or educational institutions
+          (except for medical or safety reasons)
+        status: "Prohibited"
+        next: "END"
+      
+      - value: "realtime_biometrics"
+        label: "Real time remote biometrics"
+        status: "Prohibited"
+        next: "END"
+      
+      - value: "none"
+        label: "None of the above"
+        conditions:
+          - if: "entity_type in ['provider', 'deployer']"
+            next: "R4"
+          - else:
+            next: "END"
+
+  R4:
+    id: "R4"
+    section: "Rules for Particular Types"
+    question: "Does your system perform any of these functions?"
+    type: "multiple_choice"
+    source: "Article 50"
+    options:
+      - value: "deepfake"
+        label: >
+          Generating or manipulating image, audio or video content constituting
+          a deep fake
+        visibility:
+          - "Deployer"
+        obligations:
+          - "Transparency: Content Resemblance"
+        conditions:
+          - if: "system_is_high_risk"
+            next: "R5"
+          - else:
+            next: "END"
+      
+      - value: "text_manipulation"
+        label: >
+          Generating or manipulating text which is published to inform the public
+          on matters of public interest
+        visibility:
+          - "Deployer"
+        obligations:
+          - "Transparency: Content Resemblance"
+        conditions:
+          - if: "system_is_high_risk"
+            next: "R5"
+          - else:
+            next: "END"
+      
+      - value: "emotion_biometric_recognition"
+        label: "Emotion recognition or biometric categorisation"
+        visibility:
+          - "Deployer"
+        obligations:
+          - "Transparency: Emotion & Biometric"
+        conditions:
+          - if: "system_is_high_risk"
+            next: "R5"
+          - else:
+            next: "END"
+      
+      - value: "interact_with_people"
+        label: "Interacting directly with people"
+        visibility:
+          - "Provider"
+        obligations:
+          - "Transparency: Natural Persons"
+        next: "END"
+      
+      - value: "generate_synthetic_content"
+        label: "Generating synthetic audio, image, video or text content"
+        visibility:
+          - "Provider"
+        obligations:
+          - "Transparency: Synthetic Content"
+        next: "END"
+      
+      - value: "none"
+        label: "None of the above"
+        conditions:
+          - if: "entity_type == 'deployer' AND system_is_high_risk"
+            next: "R5"
+          - else:
+            next: "END"
+
+  R5:
+    id: "R5"
+    section: "Rules for Particular Types"
+    question: >
+      Are you a body governed by 'public law', or a private entity providing
+      public services?
+    type: "single_choice"
+    source: "Recital 96"
+    options:
+      - value: "yes"
+        label: "Yes"
+        obligations:
+          - "Fundamental Rights Impact Assessment"
+        next: "END"
+      
+      - value: "no"
+        label: "No"
+        next: "END"
+
+# ===== STATUS CHANGES =====
+status_changes:
+  become_provider:
+    name: "Become a Provider"
+    description: >
+      You are considered a provider for the purposes of this legislation under
+      Article 25, and will receive provider obligations accordingly.
+    source: "Article 25"
+  
+  high_risk:
+    name: "High risk"
+    description: >
+      Under Article 6 your AI system is considered high risk. You will receive
+      obligations for high risk systems depending on your entity type.
+    source: "Article 6"
+  
+  out_of_scope:
+    name: "Out of scope"
+    description: >
+      Your system is likely outside of the scope of the EU AI Act. For more
+      information about the scope of the Act, please see Article 2.
+    source: "Article 2"
+  
+  prohibited:
+    name: "Prohibited"
+    description: >
+      Your system may be prohibited under the EU AI Act. For more information
+      see Article 5.
+    source: "Article 5"
+
+# ===== OBLIGATIONS =====
+obligations:
+  ai_literacy:
+    name: "AI Literacy"
+    applies_to:
+      - "Provider"
+      - "Deployer"
+    description: >
+      As a provider or deployer, you must take measures to ensure a sufficient
+      level of AI literacy for your staff (and other people dealing with the
+      operation and use of AI systems on their behalf), taking into account their
+      technical knowledge, experience, education and training and the context the
+      AI systems are to be used in.
+    source: "Article 4"
+  
+  handover:
+    name: "Handover"
+    applies_to:
+      - "Provider"
+    description: >
+      If a deployer, distributor, or importer makes a modification to an AI system,
+      they will be considered a 'provider' of that system under Article 25. The
+      original provider will no longer be considered a provider of that particular
+      modified system, but they will have obligations to supply the new provider
+      with some information, materials, and access.
+    source: "Article 25"
+  
+  provider_high_risk:
+    name: "Provider"
+    applies_to:
+      - "Provider"
+    description: >
+      As provider of a high risk AI system, you must comply with Article 16
+      obligations.
+    source: "Article 16"
+  
+  deployer_high_risk:
+    name: "Deployer"
+    applies_to:
+      - "Deployer"
+    description: >
+      As deployer of a high-risk AI system, you must comply with Article 26
+      obligations.
+    source: "Article 26"
+  
+  distributor_high_risk:
+    name: "Distributor"
+    applies_to:
+      - "Distributor"
+    description: >
+      As distributor of a high risk AI system, you must comply with Article 24
+      obligations.
+    source: "Article 24"
+  
+  importer_high_risk:
+    name: "Importer"
+    applies_to:
+      - "Importer"
+    description: >
+      As importer of a high risk AI system, you must comply with Article 23
+      obligations.
+    source: "Article 23"
+  
+  product_manufacturer:
+    name: "Product Manufacturer"
+    applies_to:
+      - "Product Manufacturer"
+    description: >
+      As a product manufacturer placing on the market / putting into service an
+      AI system under your name or trademark, you must comply with Recital 47 and
+      Recital 166 obligations. If your system is high-risk, you are also considered
+      a 'provider' of that AI system according to Article 25, and will receive
+      provider obligations accordingly.
+    source: "Recital 47, Recital 166, Article 25"
+  
+  authorised_representative:
+    name: "Authorised Representative"
+    applies_to:
+      - "Authorised Representative"
+    description: >
+      As an authorised representative appointed via a written mandate by a provider
+      of a high risk AI system or a General Purpose AI model, you must comply with
+      Article 22 and/or Article 54 obligations respectively.
+    source: "Article 22, Article 54"
+  
+  gpai:
+    name: "GPAI (General Purpose AI Model)"
+    applies_to:
+      - "Provider"
+    description: >
+      You need to follow obligations for Providers of General Purpose AI (GPAI)
+      models under Article 53. Also, obligations on high risk AI systems may apply
+      directly or indirectly under Recital 85.
+    source: "Article 53, Recital 85"
+  
+  gpai_systemic_risk:
+    name: "GPAI with Systemic Risk"
+    applies_to:
+      - "Provider"
+    description: >
+      You need to follow obligations for Providers of GPAI models with Systemic
+      Risk under Article 55.
+    source: "Article 55"
+  
+  notify_nca:
+    name: "Notify NCA"
+    applies_to:
+      - "Provider"
+    description: >
+      If a provider considers their AI system to NOT pose a significant risk of
+      harm (see Article 6 point 2a) they must register their system in the EU
+      database before that system is placed on the market or put into service
+      (see Article 49 point 2). They must also document their assessment and
+      provide this documentation to the National Competent Authorities (NCA) upon
+      request (see Article 6 point 4). If a market surveillance authority finds
+      that the AI system has been misclassified (see Article 80), your system
+      would be subject to the 'high-risk' obligations described in Chapter III
+      Section 2 and you may be subject to fines under Article 99.
+    source: "Article 6 point 4, Article 49 point 2, Article 80, Article 99"
+  
+  transparency_natural_persons:
+    name: "Transparency: Natural Persons"
+    applies_to:
+      - "Provider"
+    description: >
+      You must follow transparency obligations under Article 50, point 1.
+    source: "Article 50 point 1"
+  
+  transparency_synthetic_content:
+    name: "Transparency: Synthetic Content"
+    applies_to:
+      - "Provider"
+    description: >
+      You must follow transparency obligations under Article 50, point 2.
+    source: "Article 50 point 2"
+  
+  transparency_emotion_biometric:
+    name: "Transparency: Emotion & Biometric"
+    applies_to:
+      - "Deployer"
+    description: >
+      You must follow transparency obligations under Article 50, point 3.
+    source: "Article 50 point 3"
+  
+  transparency_content_resemblance:
+    name: "Transparency: Content Resemblance"
+    applies_to:
+      - "Deployer"
+    description: >
+      You must follow transparency obligations under Article 50, point 4.
+    source: "Article 50 point 4"
+  
+  fundamental_rights_impact_assessment:
+    name: "Fundamental Rights Impact Assessment"
+    applies_to:
+      - "Deployer"
+    description: >
+      Prior to deploying a high risk system, you must perform a fundamental rights
+      impacts assessment (unless the system is intended to be used in critical
+      infrastructure) according to Article 27.
+    source: "Article 27"
+
+# ===== EXCEPTIONS AND EXCLUSIONS =====
+exceptions:
+  high_risk_exception:
+    name: "High risk Exception"
+    description: >
+      Your system likely falls under an Article 2 exception. This means that only
+      Article 112 applies to your system. Article 112 mostly describes obligations
+      for the Commission to regularly review and update the EU AI Act, so the
+      primary obligation for you is to keep an eye on these obligations and maintain
+      compliance.
+    source: "Article 2, Article 112"
+  
+  excluded:
+    name: "Excluded"
+    description: >
+      Your system is likely excluded from the EU AI Act, which means you do not
+      face any obligations. For more information see Article 2.
+    source: "Article 2"
+  
+  open_source:
+    name: "Exclusion: Open Source"
+    description: >
+      Until your AI system is placed on the market or put into service by a provider
+      as part of an AI system that is high risk, prohibited, general purpose, or has
+      transparency obligations, your open source system is likely excluded from the
+      EU AI Act, which means it is not subject to any obligations. For more
+      information see Article 2 point 12.
+    source: "Article 2 point 12"
+  
+  personal_usage:
+    name: "Exclusion: Personal Usage"
+    description: >
+      Obligations of deployers do not apply for a natural person that deploys an
+      AI system for purely personal, non-professional activities. For more
+      information see Article 2 point 10.
+    source: "Article 2 point 10"
+  
+  research_development:
+    name: "Exclusion: Research & Development"
+    description: >
+      AI systems and models with the sole purpose of scientific research and
+      development are excluded. For all other systems, research & development
+      activities are likely excluded until your AI system is placed on the market
+      or put into service. Systems and activities that are excluded are not subject
+      to any obligations. For more information see Article 2 points 6 and 8.
+    source: "Article 2 points 6 and 8"
+
+# ===== TEST SCENARIOS =====
+test_scenarios:
+  - name: "Provider of high-risk biometric system"
+    description: "Tests provider obligations for high-risk biometric AI system"
+    inputs:
+      E1: "provider"
+      E2: "none"
+      HR1: "none"
+      HR2: "none"
+      HR4: "biometrics"
+      HR5: "yes"
+      S1: "placing_ai_systems_eu"
+      R2: "none"
+      R3: "none"
+      R4: "none"
+    expected_obligations:
+      - "AI Literacy"
+      - "Provider"
+    expected_status: "high_risk"
+  
+  - name: "Deployer of non-high-risk system with deepfake"
+    description: "Tests transparency obligations for deepfake content"
+    inputs:
+      E1: "deployer"
+      E2: "none"
+      HR1: "none"
+      HR2: "none"
+      HR4: "none"
+      S1: "established_in_eu"
+      R2: "none"
+      R3: "none"
+      R4: "deepfake"
+    expected_obligations:
+      - "AI Literacy"
+      - "Transparency: Content Resemblance"
+    expected_status: "in_scope"
+  
+  - name: "Product manufacturer with safety component"
+    description: "Tests product manufacturer becoming provider"
+    inputs:
+      E1: "product_manufacturer"
+      E3: "placed_with_product"
+      HR6: "medical_devices"
+    expected_obligations:
+      - "Product Manufacturer"
+    expected_status: "become_provider"
+  
+  - name: "Open source research system"
+    description: "Tests exclusions for open source research"
+    inputs:
+      E1: "provider"
+      E2: "none"
+      HR1: "none"
+      HR2: "none"
+      HR4: "none"
+      S1: "placing_ai_systems_eu"
+      R2: "open_source"
+    expected_obligations: []
+    expected_status: "excluded"
+  
+  - name: "Prohibited social scoring system"
+    description: "Tests prohibition of social scoring"
+    inputs:
+      E1: "provider"
+      E2: "none"
+      HR1: "none"
+      HR2: "none"
+      HR4: "none"
+      S1: "placing_ai_systems_eu"
+      R2: "none"
+      R3: "social_scoring"
+    expected_obligations: []
+    expected_status: "prohibited"
+
+# ===== DOCUMENTATION TEMPLATES =====
+documentation:
+  questionnaire_completion_guide:
+    title: "How to Complete the EU AI Act Compliance Questionnaire"
+    sections:
+      - name: "Before You Start"
+        content: >
+          Complete this questionnaire separately for each AI system in your
+          organisation. If you match multiple entity type definitions, complete
+          the questionnaire once for each type.
+      
+      - name: "Understanding Entity Types"
+        content: >
+          First, determine which entity type best describes your organisation's
+          role. See the definitions section for detailed explanations of each
+          entity type.
+      
+      - name: "High Risk Classification"
+        content: >
+          The questionnaire will guide you through determining if your system is
+          high-risk based on its category and purpose. Pay careful attention to
+          the Annex references.
+      
+      - name: "Transparency Requirements"
+        content: >
+          Even non-high-risk systems may have transparency obligations depending
+          on their functions. Answer all relevant questions about system
+          capabilities.
+  
+  compliance_checklist:
+    title: "EU AI Act Compliance Checklist"
+    items:
+      - category: "Entity Classification"
+        tasks:
+          - "Determine entity type(s)"
+          - "Complete questionnaire for each entity type"
+          - "Document entity type justification"
+      
+      - category: "Risk Assessment"
+        tasks:
+          - "Review high-risk categories in Annexes I and III"
+          - "Assess if system poses significant risk"
+          - "Document risk assessment methodology"
+      
+      - category: "Obligation Identification"
+        tasks:
+          - "List all applicable obligations"
+          - "Assign responsibility for each obligation"
+          - "Create implementation timeline"
+      
+      - category: "Documentation"
+        tasks:
+          - "Maintain questionnaire responses"
+          - "Document all assessments"
+          - "Prepare for NCA requests"
+
+# ===== VALIDATION RULES =====
+validation_rules:
+  - rule_id: "VR001"
+    description: "Entity type must be selected before proceeding"
+    applies_to: "E1"
+    validation: "required"
+  
+  - rule_id: "VR002"
+    description: "Multiple entity types require separate questionnaire completions"
+    applies_to: "E1"
+    validation: "warning"
+  
+  - rule_id: "VR003"
+    description: "High-risk determination must consider all applicable categories"
+    applies_to: ["HR1", "HR2", "HR4"]
+    validation: "comprehensive"
+  
+  - rule_id: "VR004"
+    description: "Prohibited systems cannot proceed with obligations"
+    applies_to: "R3"
+    validation: "blocking"
+  
+  - rule_id: "VR005"
+    description: "Third-party conformity assessment requires legal review"
+    applies_to: "HR3"
+    validation: "expert_recommended"
