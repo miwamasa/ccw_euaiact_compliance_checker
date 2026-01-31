@@ -930,6 +930,10 @@
         // 回答保存
         function saveAnswer() {
             const q = questions[currentQuestion];
+            // 質問が存在しない場合は終了
+            if (!q) {
+                return false;
+            }
             const inputs = document.querySelectorAll(`input[name="q_${q.id}"]:checked`);
 
             if (q.type === 'single') {
@@ -967,6 +971,12 @@
 
         // 次の質問
         function nextQuestion() {
+            // 既に質問の終わりを超えている場合
+            if (currentQuestion >= questions.length) {
+                showResult();
+                return;
+            }
+
             const terminal = saveAnswer();
 
             if (terminal) {
