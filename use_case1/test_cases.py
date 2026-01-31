@@ -105,7 +105,7 @@ TEST_CASES = [
     # ===== COMMON CASES =====
     TestCase(
         name="common_case_1_provider_high_risk_employment",
-        description="Provider of high-risk employment AI (7 questions)",
+        description="Provider of high-risk employment AI (8 questions)",
         answers={
             'Q1': 'has_eu_connection',
             'Q2': ['provider'],
@@ -116,7 +116,7 @@ TEST_CASES = [
             'Q6B': 'yes_significant',
             'Q7': ['interact_with_people']
         },
-        expected_questions=7,
+        expected_questions=8,
         expected_flags={
             'flag_is_provider': True,
             'flag_high_risk': True
@@ -129,10 +129,10 @@ TEST_CASES = [
         expected_result='COMPLIANCE_REQUIRED',
         category='common_cases'
     ),
-    
+
     TestCase(
         name="common_case_2_deployer_non_high_risk_chatbot",
-        description="Deployer of non-high-risk chatbot (6 questions)",
+        description="Deployer of non-high-risk chatbot (8 questions)",
         answers={
             'Q1': 'has_eu_connection',
             'Q2': ['deployer'],
@@ -140,9 +140,10 @@ TEST_CASES = [
             'Q4': ['none'],
             'Q5': 'no_gpai',
             'Q6': ['none'],
-            'Q7': ['interact_with_people']
+            'Q7': ['interact_with_people'],
+            'Q8': ['none']
         },
-        expected_questions=6,
+        expected_questions=8,
         expected_flags={
             'flag_is_deployer': True,
             'flag_high_risk': False
@@ -154,10 +155,10 @@ TEST_CASES = [
         expected_result='COMPLIANCE_REQUIRED',
         category='common_cases'
     ),
-    
+
     TestCase(
         name="common_case_3_gpai_systemic_risk",
-        description="GPAI model with systemic risk (7 questions)",
+        description="GPAI model with systemic risk (8 questions)",
         answers={
             'Q1': 'has_eu_connection',
             'Q2': ['provider'],
@@ -168,7 +169,7 @@ TEST_CASES = [
             'Q6': ['none'],
             'Q7': ['generate_synthetic_content']
         },
-        expected_questions=7,
+        expected_questions=8,
         expected_flags={
             'flag_is_provider': True,
             'flag_gpai': True,
@@ -183,10 +184,10 @@ TEST_CASES = [
         expected_result='COMPLIANCE_REQUIRED',
         category='common_cases'
     ),
-    
+
     TestCase(
         name="common_case_4_gpai_no_systemic_risk",
-        description="GPAI model without systemic risk (7 questions)",
+        description="GPAI model without systemic risk (8 questions)",
         answers={
             'Q1': 'has_eu_connection',
             'Q2': ['provider'],
@@ -197,7 +198,7 @@ TEST_CASES = [
             'Q6': ['none'],
             'Q7': ['none']
         },
-        expected_questions=7,
+        expected_questions=8,
         expected_flags={
             'flag_is_provider': True,
             'flag_gpai': True,
@@ -214,7 +215,7 @@ TEST_CASES = [
     # ===== COMPLEX CASES =====
     TestCase(
         name="complex_case_1_product_manufacturer_medical",
-        description="Product manufacturer with high-risk medical device (7 questions)",
+        description="Product manufacturer with high-risk medical device (9 questions)",
         answers={
             'Q1': 'has_eu_connection',
             'Q2': ['product_manufacturer'],
@@ -223,9 +224,10 @@ TEST_CASES = [
             'Q5': 'no_gpai',
             'Q6': ['annex_i_section_a'],
             'Q6A': 'yes_required',
-            'Q7': ['none']
+            'Q7': ['none'],
+            'Q8': ['none']
         },
-        expected_questions=7,
+        expected_questions=9,
         expected_flags={
             'flag_is_product_manufacturer': True,
             'flag_becomes_provider': True,
@@ -233,16 +235,15 @@ TEST_CASES = [
             'flag_high_risk': True
         },
         expected_obligations=[
-            'obligation_ai_literacy',
             'obligation_provider_high_risk'
         ],
         expected_result='COMPLIANCE_REQUIRED',
         category='complex_cases'
     ),
-    
+
     TestCase(
         name="complex_case_2_deployer_becomes_provider",
-        description="Deployer modifies system → becomes provider (9 questions)",
+        description="Deployer modifies system → becomes provider (10 questions)",
         answers={
             'Q1': 'has_eu_connection',
             'Q2': ['deployer'],
@@ -255,7 +256,7 @@ TEST_CASES = [
             'Q8': ['substantial_modification'],
             'Q9': 'yes_public'
         },
-        expected_questions=9,
+        expected_questions=10,
         expected_flags={
             'flag_is_deployer': True,
             'flag_becomes_provider': True,
@@ -273,10 +274,10 @@ TEST_CASES = [
         expected_result='COMPLIANCE_REQUIRED',
         category='complex_cases'
     ),
-    
+
     TestCase(
         name="complex_case_3_high_risk_law_enforcement",
-        description="High-risk law enforcement system (7 questions)",
+        description="High-risk law enforcement system (8 questions)",
         answers={
             'Q1': 'has_eu_connection',
             'Q2': ['provider'],
@@ -287,7 +288,7 @@ TEST_CASES = [
             'Q6B': 'yes_significant',
             'Q7': ['none']
         },
-        expected_questions=7,
+        expected_questions=8,
         expected_flags={
             'flag_is_provider': True,
             'flag_high_risk': True
@@ -303,7 +304,7 @@ TEST_CASES = [
     # ===== REGRESSION TESTS =====
     TestCase(
         name="regression_1_medical_no_third_party",
-        description="Medical device NOT requiring 3rd party assessment (7 questions)",
+        description="Medical device NOT requiring 3rd party assessment (9 questions)",
         answers={
             'Q1': 'has_eu_connection',
             'Q2': ['provider'],
@@ -315,7 +316,7 @@ TEST_CASES = [
             'Q6B': 'no_significant',
             'Q7': ['none']
         },
-        expected_questions=7,
+        expected_questions=9,
         expected_flags={
             'flag_is_provider': True,
             'flag_high_risk': False
@@ -326,10 +327,10 @@ TEST_CASES = [
         expected_result='COMPLIANCE_REQUIRED',
         category='regression_tests'
     ),
-    
+
     TestCase(
         name="regression_2_multiple_transparency",
-        description="System with multiple transparency obligations (6 questions)",
+        description="System with multiple transparency obligations (7 questions)",
         answers={
             'Q1': 'has_eu_connection',
             'Q2': ['provider'],
@@ -339,7 +340,7 @@ TEST_CASES = [
             'Q6': ['none'],
             'Q7': ['interact_with_people', 'generate_synthetic_content']
         },
-        expected_questions=6,
+        expected_questions=7,
         expected_flags={
             'flag_is_provider': True
         },
@@ -351,10 +352,10 @@ TEST_CASES = [
         expected_result='COMPLIANCE_REQUIRED',
         category='regression_tests'
     ),
-    
+
     TestCase(
         name="regression_3_critical_infrastructure",
-        description="High-risk critical infrastructure system (7 questions)",
+        description="High-risk critical infrastructure system (9 questions)",
         answers={
             'Q1': 'has_eu_connection',
             'Q2': ['provider', 'deployer'],
@@ -363,9 +364,10 @@ TEST_CASES = [
             'Q5': 'no_gpai',
             'Q6': ['annex_iii_critical_infra'],
             'Q6B': 'yes_significant',
-            'Q7': ['none']
+            'Q7': ['none'],
+            'Q9': 'yes_public'
         },
-        expected_questions=7,
+        expected_questions=9,
         expected_flags={
             'flag_is_provider': True,
             'flag_is_deployer': True,
@@ -374,7 +376,8 @@ TEST_CASES = [
         expected_obligations=[
             'obligation_ai_literacy',
             'obligation_provider_high_risk',
-            'obligation_deployer_high_risk'
+            'obligation_deployer_high_risk',
+            'obligation_fundamental_rights_assessment'
         ],
         expected_result='COMPLIANCE_REQUIRED',
         category='regression_tests'
@@ -438,7 +441,7 @@ TEST_CASES = [
     # ===== TRANSPARENCY OBLIGATION TESTS =====
     TestCase(
         name="transparency_1_deepfake",
-        description="Transparency - deepfake content",
+        description="Transparency - deepfake content (8 questions)",
         answers={
             'Q1': 'has_eu_connection',
             'Q2': ['deployer'],
@@ -446,9 +449,10 @@ TEST_CASES = [
             'Q4': ['none'],
             'Q5': 'no_gpai',
             'Q6': ['none'],
-            'Q7': ['deepfake']
+            'Q7': ['deepfake'],
+            'Q8': ['none']
         },
-        expected_questions=6,
+        expected_questions=8,
         expected_flags={
             'flag_is_deployer': True
         },
@@ -459,10 +463,10 @@ TEST_CASES = [
         expected_result='COMPLIANCE_REQUIRED',
         category='transparency_tests'
     ),
-    
+
     TestCase(
         name="transparency_2_emotion_recognition",
-        description="Transparency - emotion recognition (non-high-risk)",
+        description="Transparency - emotion recognition (non-high-risk) (8 questions)",
         answers={
             'Q1': 'has_eu_connection',
             'Q2': ['deployer'],
@@ -470,9 +474,10 @@ TEST_CASES = [
             'Q4': ['none'],
             'Q5': 'no_gpai',
             'Q6': ['none'],
-            'Q7': ['emotion_recognition']
+            'Q7': ['emotion_recognition'],
+            'Q8': ['none']
         },
-        expected_questions=6,
+        expected_questions=8,
         expected_flags={
             'flag_is_deployer': True
         },

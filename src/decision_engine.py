@@ -223,41 +223,78 @@ class OptimizedDecisionEngine:
         
         return questions
     
+    def _has_non_none_answer(self, answer) -> bool:
+        """Check if answer contains non-'none' values (handles both list and string)"""
+        if answer is None:
+            return False
+        if isinstance(answer, list):
+            return any(v != 'none' for v in answer)
+        return answer != 'none'
+
+    def _answer_contains(self, answer, value: str) -> bool:
+        """Check if answer contains a specific value (handles both list and string)"""
+        if answer is None:
+            return False
+        if isinstance(answer, list):
+            return value in answer
+        return answer == value or value in str(answer)
+
     def _initialize_inference_rules(self):
         """Initialize inference rules for deriving flags and obligations"""
-        
+
         # Rule: Provider → AI Literacy
         self.optimizer.add_inference_rule(
             'provider_ai_literacy',
-            lambda s: 'provider' in str(s.get_answer('Q2')),
+            lambda s: self._answer_contains(s.get_answer('Q2'), 'provider'),
             {'flag_is_provider': True, 'obligation_ai_literacy': True}
         )
-        
+
         # Rule: Deployer → AI Literacy
         self.optimizer.add_inference_rule(
             'deployer_ai_literacy',
-            lambda s: 'deployer' in str(s.get_answer('Q2')),
+            lambda s: self._answer_contains(s.get_answer('Q2'), 'deployer'),
             {'flag_is_deployer': True, 'obligation_ai_literacy': True}
         )
-        
+
+        # Rule: Distributor
+        self.optimizer.add_inference_rule(
+            'distributor',
+            lambda s: self._answer_contains(s.get_answer('Q2'), 'distributor'),
+            {'flag_is_distributor': True}
+        )
+
+        # Rule: Importer
+        self.optimizer.add_inference_rule(
+            'importer',
+            lambda s: self._answer_contains(s.get_answer('Q2'), 'importer'),
+            {'flag_is_importer': True}
+        )
+
+        # Rule: Product Manufacturer
+        self.optimizer.add_inference_rule(
+            'product_manufacturer',
+            lambda s: self._answer_contains(s.get_answer('Q2'), 'product_manufacturer'),
+            {'flag_is_product_manufacturer': True}
+        )
+
         # Rule: No EU connection → Out of scope
         self.optimizer.add_inference_rule(
             'out_of_scope',
             lambda s: s.get_answer('Q1') == 'no_eu_connection',
             {'flag_out_of_scope': True}
         )
-        
+
         # Rule: Exclusions → Excluded
         self.optimizer.add_inference_rule(
             'excluded',
-            lambda s: s.get_answer('Q3') and s.get_answer('Q3') != 'none',
+            lambda s: self._has_non_none_answer(s.get_answer('Q3')),
             {'flag_excluded': True}
         )
-        
+
         # Rule: Prohibited functions → Prohibited
         self.optimizer.add_inference_rule(
             'prohibited',
-            lambda s: s.get_answer('Q4') and s.get_answer('Q4') != 'none',
+            lambda s: self._has_non_none_answer(s.get_answer('Q4')),
             {'flag_prohibited': True}
         )
         
@@ -301,49 +338,56 @@ class OptimizedDecisionEngine:
             lambda s: s.get_flag('flag_high_risk') and s.get_flag('flag_is_deployer'),
             {'obligation_deployer_high_risk': True}
         )
-        
+
+        # Rule: Product manufacturer with high-risk AI becomes provider (Article 25)
+        self.optimizer.add_inference_rule(
+            'product_manufacturer_becomes_provider',
+            lambda s: s.get_flag('flag_is_product_manufacturer') and s.get_flag('flag_high_risk'),
+            {'flag_becomes_provider': True, 'flag_is_provider': True}
+        )
+
         # Rule: Modifications → Becomes provider
         self.optimizer.add_inference_rule(
             'becomes_provider',
-            lambda s: s.get_answer('Q8') and s.get_answer('Q8') != 'none',
+            lambda s: self._has_non_none_answer(s.get_answer('Q8')),
             {'flag_becomes_provider': True, 'flag_is_provider': True, 'obligation_handover': True}
         )
-        
+
         # Rule: Public body + high-risk → Fundamental rights assessment
         self.optimizer.add_inference_rule(
             'fundamental_rights',
-            lambda s: (s.get_answer('Q9') == 'yes_public' and 
-                      s.get_flag('flag_high_risk') and 
+            lambda s: (s.get_answer('Q9') == 'yes_public' and
+                      s.get_flag('flag_high_risk') and
                       s.get_flag('flag_is_deployer')),
             {'obligation_fundamental_rights_assessment': True}
         )
-        
+
         # Rule: Transparency - Natural persons
         self.optimizer.add_inference_rule(
             'transparency_natural',
-            lambda s: 'interact_with_people' in str(s.get_answer('Q7')),
+            lambda s: self._answer_contains(s.get_answer('Q7'), 'interact_with_people'),
             {'obligation_transparency_natural_persons': True}
         )
-        
+
         # Rule: Transparency - Synthetic content
         self.optimizer.add_inference_rule(
             'transparency_synthetic',
-            lambda s: 'generate_synthetic_content' in str(s.get_answer('Q7')),
+            lambda s: self._answer_contains(s.get_answer('Q7'), 'generate_synthetic_content'),
             {'obligation_transparency_synthetic_content': True}
         )
-        
+
         # Rule: Transparency - Emotion & biometric
         self.optimizer.add_inference_rule(
             'transparency_emotion',
-            lambda s: 'emotion_recognition' in str(s.get_answer('Q7')),
+            lambda s: self._answer_contains(s.get_answer('Q7'), 'emotion_recognition'),
             {'obligation_transparency_emotion_biometric': True}
         )
-        
-        # Rule: Transparency - Content resemblance
+
+        # Rule: Transparency - Content resemblance (deepfake or text manipulation)
         self.optimizer.add_inference_rule(
             'transparency_deepfake',
-            lambda s: ('deepfake' in str(s.get_answer('Q7')) or 
-                      'text_manipulation_public' in str(s.get_answer('Q7'))),
+            lambda s: (self._answer_contains(s.get_answer('Q7'), 'deepfake') or
+                      self._answer_contains(s.get_answer('Q7'), 'text_manipulation_public')),
             {'obligation_transparency_content_resemblance': True}
         )
     
@@ -375,22 +419,42 @@ class OptimizedDecisionEngine:
             # Additional logic for conditional questions
             if q_id == 'Q5A' and self.current_state.get_answer('Q5') != 'yes_gpai':
                 continue
-            
+
             if q_id == 'Q6A':
                 q6_answer = self.current_state.get_answer('Q6')
-                if not q6_answer or 'annex_i' not in str(q6_answer):
+                # Q6A is only for Annex I (section A or B) - products requiring conformity assessment
+                if not self._answer_contains(q6_answer, 'annex_i_section_a') and \
+                   not self._answer_contains(q6_answer, 'annex_i_section_b'):
                     continue
-            
+
             if q_id == 'Q6B':
                 q6_answer = self.current_state.get_answer('Q6')
-                if not q6_answer or q6_answer == 'none':
+                # Q6B is for Annex III use cases (skip if none selected or only Annex I with Q6A already answered)
+                if not q6_answer:
                     continue
-            
-            if q_id == 'Q8' and self.current_state.get_flag('flag_is_provider'):
-                continue
-            
+                # Skip if answer is just 'none' or ['none']
+                if not self._has_non_none_answer(q6_answer):
+                    continue
+                # Also skip if only Annex I was selected and Q6A is already answered
+                q6a_answer = self.current_state.get_answer('Q6A')
+                if q6a_answer is not None:
+                    # Check if there are any Annex III selections
+                    has_annex_iii = any(
+                        self._answer_contains(q6_answer, f'annex_iii_{cat}')
+                        for cat in ['biometrics', 'critical_infra', 'education', 'employment',
+                                   'essential_services', 'law_enforcement', 'migration', 'justice']
+                    )
+                    if not has_annex_iii:
+                        continue
+
+            if q_id == 'Q8':
+                # Skip Q8 if already a provider (original provider doesn't need modification check)
+                if self.current_state.get_flag('flag_is_provider') and \
+                   not self.current_state.get_flag('flag_is_product_manufacturer'):
+                    continue
+
             if q_id == 'Q9':
-                if not (self.current_state.get_flag('flag_high_risk') and 
+                if not (self.current_state.get_flag('flag_high_risk') and
                        self.current_state.get_flag('flag_is_deployer')):
                     continue
             
