@@ -435,13 +435,14 @@
             },
             'QAIS_6': {
                 id: 'QAIS_6',
-                text: 'AIシステムは以下のどのカテゴリに該当しますか？',
-                info: 'ハイリスク分類の判定に使用します。',
+                text: 'あなたのAIシステム、または安全コンポーネントとして使用される製品は、分野固有の規制の対象ですか？',
+                info: 'AI法では「安全コンポーネント」を「製品またはAIシステムの安全機能を果たすコンポーネント、またはその故障や誤動作が人や財産の健康・安全を危険にさらすもの」と定義しています（第3条(14)）',
                 type: 'radio',
+                stats: { ig: 3.7676, termProb: 0.0 },
                 options: [
-                    { value: 0, label: 'EU製品安全法規制の対象製品（附属書I）', next: 'QAIS_6_1' },
-                    { value: 1, label: '附属書IIIの分野に該当', next: 'QAIS_6_4' },
-                    { value: 2, label: '両方に該当する可能性がある', next: 'QAIS_6_1' }
+                    { value: 0, label: 'はい（分野固有の規制対象）', next: 'QAIS_6_1' },
+                    { value: 1, label: 'いいえ', next: 'QAIS_6_4' },
+                    { value: 2, label: '不明', next: 'QAIS_6_1' }
                 ]
             },
             'QAIS_6_1': {
@@ -479,18 +480,19 @@
             'QAIS_6_4': {
                 id: 'QAIS_6_4',
                 text: 'AIシステムは以下のどの分野に該当しますか？',
-                info: '附属書III のハイリスク分野',
+                info: '附属書III のハイリスク分野。いずれかに該当する場合、ハイリスクAIシステムの可能性があります。',
                 type: 'checkbox',
+                stats: { ig: 3.5, termProb: 0.0 },
                 options: [
-                    { value: 0, label: '生体認証・分類', next: 'QAIS_6_4_1' },
-                    { value: 1, label: '重要インフラ管理', next: 'QAIS_6_4_2' },
-                    { value: 2, label: '教育・職業訓練', next: 'QAIS_6_4_3' },
-                    { value: 3, label: '雇用・人事管理', next: 'QAIS_6_4_4' },
-                    { value: 4, label: '必須サービスへのアクセス', next: 'QAIS_6_4_5' },
-                    { value: 5, label: '法執行', next: 'QAIS_6_4_6' },
-                    { value: 6, label: '移民・国境管理', next: 'QAIS_6_4_7' },
-                    { value: 7, label: '司法・民主的プロセス' },
-                    { value: 8, label: '上記に該当しない', exclusive: true }
+                    { value: 0, label: '生体認証・分類', setFlags: ['high_risk_candidate'] },
+                    { value: 1, label: '重要インフラ管理', setFlags: ['high_risk_candidate'] },
+                    { value: 2, label: '教育・職業訓練', setFlags: ['high_risk_candidate'] },
+                    { value: 3, label: '雇用・人事管理', setFlags: ['high_risk_candidate'] },
+                    { value: 4, label: '必須サービスへのアクセス', setFlags: ['high_risk_candidate'] },
+                    { value: 5, label: '法執行', setFlags: ['high_risk_candidate'] },
+                    { value: 6, label: '移民・国境管理', setFlags: ['high_risk_candidate'] },
+                    { value: 7, label: '司法・民主的プロセス', setFlags: ['high_risk_candidate'] },
+                    { value: 8, label: '上記に該当しない', exclusive: true, next: 'QAIS_7' }
                 ],
                 next: 'QAIS_6_5'
             },
